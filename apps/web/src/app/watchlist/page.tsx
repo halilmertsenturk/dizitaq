@@ -34,11 +34,16 @@ export default function WatchlistPage() {
     year: item.title.year,
     poster: item.title.poster,
     rating: item.title.rating,
-    plot: null,
+    plot: item.title.plot,
     genres: item.title.genres,
     imdb_id: item.title.imdbId,
     tmdb_id: item.title.tmdbId,
     release_date: null,
+    runtime_minutes: null,
+    us_rating: null,
+    network_names: [],
+    trailer: null,
+    backdrop: null,
   }))
 
   return (

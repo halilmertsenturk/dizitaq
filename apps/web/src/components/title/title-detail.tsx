@@ -8,7 +8,7 @@ import { PlatformBadge } from '@/components/platform/platform-badge'
 import { EpisodeList } from './episode-list'
 import type { WatchmodeDetailResponse } from '@dizitaq/shared'
 import { formatRating, formatYear } from '@/lib/utils'
-import { Star, Film, Tv, Calendar, Plus, Check } from 'lucide-react'
+import { Star, Film, Tv, Calendar, Plus, Check, Clock, Play } from 'lucide-react'
 
 interface TitleDetailProps {
   data: WatchmodeDetailResponse | null
@@ -89,7 +89,32 @@ export function TitleDetail({ data, loading, error, isInWatchlist, onToggleWatch
                 )}
                 {data.type === 'series' ? 'TV Series' : 'Movie'}
               </span>
+              {data.runtime_minutes && (
+                <span className="flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  {data.runtime_minutes} min
+                </span>
+              )}
+              {data.us_rating && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5">
+                  {data.us_rating}
+                </Badge>
+              )}
+              {data.network_names.length > 0 && (
+                <span className="text-xs">{data.network_names.join(', ')}</span>
+              )}
             </div>
+            {data.trailer && (
+              <a
+                href={data.trailer}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm text-red-400 hover:text-red-300 mt-2"
+              >
+                <Play className="h-4 w-4 fill-current" />
+                Watch Trailer
+              </a>
+            )}
           </div>
 
           {/* Genres */}

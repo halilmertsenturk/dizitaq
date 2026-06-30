@@ -40,7 +40,7 @@ export function useSearch(filters: TitleFilters) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!filters.query && !filters.genre && !filters.year) return
+    if (!filters.query && !filters.genre && !filters.year && !filters.type && !filters['min-rating']) return
 
     const controller = new AbortController()
     setLoading(true)

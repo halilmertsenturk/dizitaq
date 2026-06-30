@@ -6,6 +6,8 @@ const CACHE_TTL = {
   SOURCES: 60 * 60 * 12,     // 12 hours
   EPISODES: 60 * 60 * 24,    // 24 hours
   TRENDING: 60 * 60 * 6,     // 6 hours
+  BROWSE: 60 * 60 * 6,      // 6 hours
+  GENRES: 60 * 60 * 24 * 7, // 7 days (rarely changes)
 }
 
 function cacheKey(prefix: string, key: string): string {

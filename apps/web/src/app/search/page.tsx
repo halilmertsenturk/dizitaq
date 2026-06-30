@@ -17,15 +17,16 @@ export default function SearchPage() {
 
   const debouncedQuery = useDebounce(query, 400)
 
-  const hasFilters = debouncedQuery || genre || year || type
-
-  const searchFilters: TitleFilters | undefined = hasFilters ? {
+  const resolvedFilters: TitleFilters = {
     query: debouncedQuery || undefined,
-    genre: genre || undefined,
-    year: year || undefined,
-    type: (type || undefined) as TitleFilters['type'],
+    genre: genre && genre !== 'all' ? genre : undefined,
+    year: year && year !== 'all' ? year : undefined,
+    type: type && type !== 'all' ? type as TitleFilters['type'] : undefined,
     page: 1,
-  } : undefined
+  }
+
+  const hasFilters = !!(resolvedFilters.query || resolvedFilters.genre || resolvedFilters.year || resolvedFilters.type)
+  const searchFilters: TitleFilters | undefined = hasFilters ? resolvedFilters : undefined
 
   const { data: searchData, loading: searchLoading, error: searchError } = useSearch(
     searchFilters ?? { query: debouncedQuery || undefined }

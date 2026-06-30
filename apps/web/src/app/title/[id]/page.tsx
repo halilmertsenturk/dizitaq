@@ -1,12 +1,11 @@
 'use client'
 
-import { use } from 'react'
 import { TitleDetail } from '@/components/title/title-detail'
 import { useTitleDetails } from '@/hooks/use-titles'
 import { useWatchlist } from '@/hooks/use-watchlist'
 
-export default function TitlePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function TitlePage({ params }: { params: { id: string } }) {
+  const { id } = params
   const watchmodeId = parseInt(id)
   const { data, loading, error } = useTitleDetails(id)
   const { isInWatchlist, addToWatchlist, removeFromWatchlist } = useWatchlist()

@@ -16,6 +16,7 @@ interface WatchlistEntry {
     type: string
     year: number | null
     rating: number | null
+    plot: string | null
     genres: string[]
     imdbId: string | null
     tmdbId: number | null

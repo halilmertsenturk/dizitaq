@@ -12,6 +12,21 @@ interface TitleCardProps {
   priority?: boolean
 }
 
+const PLACEHOLDER_GRADIENTS = [
+  'from-red-900 via-red-800 to-orange-900',
+  'from-blue-900 via-indigo-800 to-purple-900',
+  'from-green-900 via-emerald-800 to-teal-900',
+  'from-purple-900 via-violet-800 to-pink-900',
+  'from-yellow-900 via-amber-800 to-orange-900',
+  'from-pink-900 via-rose-800 to-red-900',
+  'from-indigo-900 via-blue-800 to-cyan-900',
+  'from-gray-900 via-slate-800 to-zinc-900',
+]
+
+function getPlaceholderGradient(id: number): string {
+  return PLACEHOLDER_GRADIENTS[id % PLACEHOLDER_GRADIENTS.length]
+}
+
 export function TitleCard({ title, priority = false }: TitleCardProps) {
   return (
     <Link href={`/title/${title.id}`} className="title-card group block aspect-[2/3]">
@@ -26,8 +41,10 @@ export function TitleCard({ title, priority = false }: TitleCardProps) {
             priority={priority}
           />
         ) : (
-          <div className="flex h-full items-center justify-center bg-muted">
-            <Film className="h-12 w-12 text-muted-foreground" />
+          <div className={`flex h-full items-center justify-center bg-gradient-to-br ${getPlaceholderGradient(title.id)}`}>
+            <span className="text-5xl font-bold text-white/30 select-none">
+              {title.title.charAt(0).toUpperCase()}
+            </span>
           </div>
         )}
 

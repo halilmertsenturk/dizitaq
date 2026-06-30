@@ -78,26 +78,149 @@ async function fetchFromWatchmode<T>(
   return data
 }
 
+const genreNameToId: Record<string, number> = {}
+let genresLoaded = false
+
+async function ensureGenres() {
+  if (genresLoaded) return
+  const genres = await fetchFromWatchmode<Array<{ id: number; name: string }>>(
+    '/genres', {}, 'genres', CACHE_TTL.GENRES
+  )
+  for (const g of genres) {
+    genreNameToId[g.name.toLowerCase()] = g.id
+  }
+  genresLoaded = true
+}
+
+function mapWatchmodeType(type: string): 'movie' | 'series' {
+  return (type === 'tv_series' || type === 'tv_miniseries' || type === 'tv_special' || type === 'tv_movie'
+    ? 'series'
+    : 'movie') as 'movie' | 'series'
+}
+
+async function fetchPosterForTitle(id: number): Promise<string | null> {
+  try {
+    const details = await fetchFromWatchmode<{ poster: string | null }>(
+      `/title/${id}/details`,
+      {},
+      'details',
+      CACHE_TTL.DETAILS
+    )
+    return details.poster ?? null
+  } catch {
+    return null
+  }
+}
+
+async function enrichWithPosters(titles: WatchmodeTitle[]): Promise<WatchmodeTitle[]> {
+  const posterResults = await Promise.allSettled(
+    titles.map(t => fetchPosterForTitle(t.id))
+  )
+  return titles.map((t, i) => {
+    const poster = posterResults[i].status === 'fulfilled' ? posterResults[i].value : null
+    return poster ? { ...t, poster } : t
+  })
+}
+
+function mapTitleResult(t: { id: number; title?: string; name?: string; type: string; year: number | null; imdb_id: string | null; tmdb_id: number | null }): WatchmodeTitle {
+  return {
+    id: t.id,
+    title: t.title ?? t.name ?? '',
+    type: mapWatchmodeType(t.type),
+    year: t.year,
+    poster: null,
+    rating: null,
+    plot: null,
+    genres: [],
+    imdb_id: t.imdb_id,
+    tmdb_id: t.tmdb_id,
+    release_date: null,
+    runtime_minutes: null,
+    us_rating: null,
+    network_names: [],
+    trailer: null,
+    backdrop: null,
+  }
+}
+
 export async function searchTitles(
   filters: TitleFilters
 ): Promise<WatchmodeSearchResponse> {
-  const params: Record<string, string | number | undefined> = {
-    search_field: 'name',
-    search_value: filters.query,
-    genres: filters.genre,
-    year: filters.year,
-    type: filters.type === 'both' ? undefined : filters.type,
-    'min-rating': filters['min-rating'],
-    page: filters.page ?? 1,
-    limit: filters.limit ?? 20,
+  const { query, genre, year, type, 'min-rating': minRating, page = 1, limit = 20 } = filters
+
+  if (query) {
+    const params: Record<string, string | number | undefined> = {
+      search_field: 'name',
+      search_value: query,
+      types: type && type !== 'both' ? (type === 'series' ? 'tv_series' : 'movie') : undefined,
+      page,
+      limit,
+    }
+
+    const raw = await fetchFromWatchmode<{
+      title_results: Array<{
+        id: number
+        name: string
+        type: string
+        year: number | null
+        imdb_id: string | null
+        tmdb_id: number | null
+      }>
+    }>('/search', params, 'search', CACHE_TTL.SEARCH)
+
+    return {
+      titles: await enrichWithPosters(raw.title_results.map(mapTitleResult)),
+      total: 0,
+      current_page: 0,
+      total_pages: 0,
+    }
   }
 
-  return fetchFromWatchmode<WatchmodeSearchResponse>(
-    '/search',
-    params,
-    'search',
-    CACHE_TTL.SEARCH
-  )
+  const listParams: Record<string, string | number | undefined> = {
+    sort_by: 'popularity_desc',
+    page,
+    limit,
+  }
+
+  if (type && type !== 'both') {
+    listParams.types = type === 'series' ? 'tv_series' : 'movie'
+  }
+
+  if (genre) {
+    await ensureGenres()
+    const id = genreNameToId[genre.toLowerCase()]
+    if (id) listParams.genres = String(id)
+  }
+
+  if (year) {
+    listParams.release_date_start = `${year}0101`
+    listParams.release_date_end = `${year}1231`
+  }
+
+  if (minRating) {
+    listParams['user_rating_low'] = minRating
+  }
+
+  const raw = await fetchFromWatchmode<{
+    titles: Array<{
+      id: number
+      title: string
+      year: number | null
+      type: string
+      imdb_id: string | null
+      tmdb_id: number | null
+    }>
+    page: number
+    total_pages: number
+    total_results: number
+  }>('/list-titles', listParams, 'browse', CACHE_TTL.BROWSE)
+
+  return {
+    titles: await enrichWithPosters(raw.titles.map(mapTitleResult)),
+    total: raw.total_results,
+    current_page: raw.page,
+    total_pages: raw.total_pages,
+  }
 }
 
 export async function getTrending(
@@ -106,29 +229,85 @@ export async function getTrending(
   type?: 'movie' | 'series'
 ): Promise<WatchmodeSearchResponse> {
   const params: Record<string, string | number | undefined> = {
-    page,
-    limit,
-    type,
     sort_by: 'popularity_desc',
+    limit,
+    page,
   }
 
-  return fetchFromWatchmode<WatchmodeSearchResponse>(
-    '/search',
-    params,
-    `trending${type ? `:${type}` : ''}`,
-    CACHE_TTL.TRENDING
-  )
+  if (type) {
+    params.types = type === 'series' ? 'tv_series' : 'movie'
+  }
+
+  const raw = await fetchFromWatchmode<{
+    titles: Array<{
+      id: number
+      title: string
+      year: number | null
+      type: string
+      imdb_id: string | null
+      tmdb_id: number | null
+    }>
+    page: number
+    total_pages: number
+    total_results: number
+  }>('/list-titles', params, `trending${type ? `:${type}` : ''}`, CACHE_TTL.TRENDING)
+
+  return {
+    titles: await enrichWithPosters(raw.titles.map(mapTitleResult)),
+    total: raw.total_results,
+    current_page: raw.page,
+    total_pages: raw.total_pages,
+  }
 }
 
 export async function getTitleDetails(
   id: number
 ): Promise<WatchmodeTitle> {
-  return fetchFromWatchmode<WatchmodeTitle>(
+  const raw = await fetchFromWatchmode<{
+    id: number
+    title: string
+    plot_overview: string | null
+    user_rating: number | null
+    genre_names: string[] | null
+    poster: string | null
+    release_date: string | null
+    type: string
+    year: number | null
+    imdb_id: string | null
+    tmdb_id: number | null
+    runtime_minutes: number | null
+    us_rating: string | null
+    networks: number[] | null
+    network_names: string[] | null
+    similar_titles: number[] | null
+    original_language: string | null
+    trailer: string | null
+    backdrop: string | null
+  }>(
     `/title/${id}/details`,
     {},
     'details',
     CACHE_TTL.DETAILS
   )
+
+  return {
+    id: raw.id,
+    title: raw.title,
+    type: mapWatchmodeType(raw.type),
+    year: raw.year,
+    poster: raw.poster,
+    rating: raw.user_rating,
+    plot: raw.plot_overview,
+    genres: raw.genre_names ?? [],
+    imdb_id: raw.imdb_id,
+    tmdb_id: raw.tmdb_id,
+    release_date: raw.release_date,
+    runtime_minutes: raw.runtime_minutes,
+    us_rating: raw.us_rating,
+    network_names: raw.network_names ?? [],
+    trailer: raw.trailer,
+    backdrop: raw.backdrop,
+  }
 }
 
 export async function getTitleSources(

@@ -10,6 +10,11 @@ export interface WatchmodeTitle {
   imdb_id: string | null
   tmdb_id: number | null
   release_date: string | null
+  runtime_minutes: number | null
+  us_rating: string | null
+  network_names: string[]
+  trailer: string | null
+  backdrop: string | null
 }
 
 export interface WatchmodeSource {
