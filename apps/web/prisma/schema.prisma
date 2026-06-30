@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  hashedPassword String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts        Account[]
+  sessions        Session[]
+  watchlist       Watchlist[]
+  searchHistory   SearchHistory[]
+  recentlyViewed  RecentlyViewed[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model CachedTitle {
+  id          String   @id @default(cuid())
+  watchmodeId Int      @unique
+  title       String
+  type        String   // "movie" | "series"
+  year        Int?
+  genres      String[] // PostgreSQL array
+  poster      String?
+  rating      Float?
+  plot        String?
+  imdbId      String?
+  tmdbId      Int?
+  rawJson     Json?    // Full API response as fallback
+  cachedAt    DateTime @default(now())
+
+  sources        CachedSource[]
+  seasons        CachedSeason[]
+  watchlist      Watchlist[]
+  recentlyViewed RecentlyViewed[]
+  searchHistory  SearchHistory[]
+}
+
+model CachedSource {
+  id         String @id @default(cuid())
+  sourceId   Int
+  name       String
+  type       String
+  region     String
+  iosUrl     String?
+  androidUrl String?
+  webUrl     String?
+  format     String
+  price      Float?
+  quality    String
+
+  titleId String
+  title   CachedTitle @relation(fields: [titleId], references: [id], onDelete: Cascade)
+
+  @@unique([titleId, sourceId])
+}
+
+model CachedSeason {
+  id           String @id @default(cuid())
+  seasonNumber Int
+
+  titleId String
+  title   CachedTitle   @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  episodes CachedEpisode[]
+
+  @@unique([titleId, seasonNumber])
+}
+
+model CachedEpisode {
+  id        String  @id @default(cuid())
+  epNum     Int
+  title     String
+  synopsis  String?
+  airDate   String?
+  image     String?
+
+  seasonId String
+  season   CachedSeason @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  @@unique([seasonId, epNum])
+}
+
+model Watchlist {
+  id      String   @id @default(cuid())
+  userId  String
+  titleId String
+  addedAt DateTime @default(now())
+
+  user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title CachedTitle @relation(fields: [titleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, titleId])
+}
+
+model SearchHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  titleId   String?
+  query     String
+  filters   Json?    // JSON of applied filters
+  createdAt DateTime @default(now())
+
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title CachedTitle? @relation(fields: [titleId], references: [id], onDelete: Cascade)
+}
+
+model RecentlyViewed {
+  id       String   @id @default(cuid())
+  userId   String
+  titleId  String
+  viewedAt DateTime @default(now())
+
+  user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title CachedTitle @relation(fields: [titleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, titleId])
+}
