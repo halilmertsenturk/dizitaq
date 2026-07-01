@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/options'
 import { prisma } from '@/lib/prisma'
+import { getTitleDetails } from '@/services/watchmode'
 
 async function getUserId(): Promise<string | null> {
   const session = await getServerSession(authOptions)
@@ -15,12 +16,20 @@ async function ensureTitle(watchmodeId: number): Promise<string> {
   const existing = await prisma.cachedTitle.findUnique({ where: { watchmodeId } })
   if (existing) return existing.id
 
+  const details = await getTitleDetails(watchmodeId)
+
   const created = await prisma.cachedTitle.create({
     data: {
       watchmodeId,
-      title: `Title ${watchmodeId}`,
-      type: 'movie',
-      genres: [],
+      title: details.title,
+      type: details.type,
+      year: details.year,
+      genres: details.genres,
+      poster: details.poster,
+      rating: details.rating,
+      plot: details.plot,
+      imdbId: details.imdb_id,
+      tmdbId: details.tmdb_id,
     },
   })
   return created.id
