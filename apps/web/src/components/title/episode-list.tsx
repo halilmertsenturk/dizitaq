@@ -9,8 +9,8 @@ interface EpisodeListProps {
   seasons: WatchmodeSeason[]
 }
 
-function formatEp(season: number, ep: number): string {
-  return `S${String(season).padStart(2, '0')}E${String(ep).padStart(2, '0')}`
+function formatEp(season: number, episode: number): string {
+  return `S${String(season).padStart(2, '0')}E${String(episode).padStart(2, '0')}`
 }
 
 export function EpisodeList({ seasons }: EpisodeListProps) {
@@ -34,7 +34,7 @@ export function EpisodeList({ seasons }: EpisodeListProps) {
               <div className="space-y-2 pt-2">
                 {season.episodes.map((ep) => (
                   <div
-                    key={ep.ep_num}
+                    key={ep.episode_number}
                     className="flex gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
                   >
                     {ep.image ? (
@@ -44,6 +44,7 @@ export function EpisodeList({ seasons }: EpisodeListProps) {
                           alt={ep.title}
                           fill
                           className="object-cover"
+                          sizes="96px"
                         />
                       </div>
                     ) : (
@@ -54,7 +55,7 @@ export function EpisodeList({ seasons }: EpisodeListProps) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-mono text-muted-foreground whitespace-nowrap">
-                          {formatEp(season.season_number, ep.ep_num)}
+                          {formatEp(season.season_number, ep.episode_number)}
                         </span>
                       </div>
                       <p className="text-sm font-medium truncate">{ep.title}</p>

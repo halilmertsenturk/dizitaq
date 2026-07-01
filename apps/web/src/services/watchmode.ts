@@ -341,18 +341,20 @@ export async function getFullTitleDetails(
     getTitleEpisodes(id).catch(() => []),
   ])
 
-  // Group episodes by season
+  if (!Array.isArray(episodesRaw)) return { ...details, sources, seasons: [] }
+
   const seasonMap = new Map<number, WatchmodeEpisode[]>()
   for (const ep of episodesRaw) {
-    const existing = seasonMap.get(ep.season_num) ?? []
+    if (typeof ep.season_number !== 'number') continue
+    const existing = seasonMap.get(ep.season_number) ?? []
     existing.push(ep)
-    seasonMap.set(ep.season_num, existing)
+    seasonMap.set(ep.season_number, existing)
   }
 
   const seasons = Array.from(seasonMap.entries())
     .map(([seasonNumber, episodes]) => ({
       season_number: seasonNumber,
-      episodes: episodes.sort((a, b) => a.ep_num - b.ep_num),
+      episodes: episodes.sort((a, b) => a.episode_number - b.episode_number),
     }))
     .sort((a, b) => a.season_number - b.season_number)
 

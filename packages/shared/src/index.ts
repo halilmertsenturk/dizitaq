@@ -31,8 +31,8 @@ export interface WatchmodeSource {
 }
 
 export interface WatchmodeEpisode {
-  season_num: number
-  ep_num: number
+  season_number: number
+  episode_number: number
   title: string
   synopsis: string | null
   air_date: string | null
