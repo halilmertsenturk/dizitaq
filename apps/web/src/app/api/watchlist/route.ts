@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/options'
 import { prisma } from '@/lib/prisma'
 import { getTitleDetails } from '@/services/watchmode'
+import { getWatchlistLimiter, getBodySize, BODY_SIZE_LIMIT, parseId } from '@/lib/security'
 
 async function getUserId(): Promise<string | null> {
   const session = await getServerSession(authOptions)
@@ -11,7 +12,6 @@ async function getUserId(): Promise<string | null> {
   return user?.id ?? null
 }
 
-// Ensure a CachedTitle exists for a given watchmode ID
 async function ensureTitle(watchmodeId: number): Promise<string> {
   const existing = await prisma.cachedTitle.findUnique({ where: { watchmodeId } })
   if (existing && existing.title !== `Title ${watchmodeId}`) return existing.id
@@ -60,9 +60,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const limiter = getWatchlistLimiter()
+  if (limiter) {
+    const ip = request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? 'unknown'
+    const { success } = await limiter.limit(`post:${userId}`)
+    if (!success) {
+      return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
+    }
+  }
+
+  const size = getBodySize(request)
+  if (size > BODY_SIZE_LIMIT) {
+    return NextResponse.json({ error: 'Request body too large' }, { status: 413 })
+  }
+
   const { watchmodeId } = await request.json()
 
-  if (!watchmodeId || typeof watchmodeId !== 'number') {
+  if (typeof watchmodeId !== 'number' || watchmodeId <= 0 || !Number.isInteger(watchmodeId)) {
     return NextResponse.json(
       { error: 'Missing or invalid required field: watchmodeId' },
       { status: 400 }
@@ -92,18 +106,27 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const limiter = getWatchlistLimiter()
+  if (limiter) {
+    const ip = request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? 'unknown'
+    const { success } = await limiter.limit(`delete:${userId}`)
+    if (!success) {
+      return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
+    }
+  }
+
   const { searchParams } = new URL(request.url)
-  const watchmodeId = searchParams.get('watchmodeId')
+  const watchmodeId = parseId(searchParams.get('watchmodeId'))
 
   if (!watchmodeId) {
     return NextResponse.json(
-      { error: 'Missing required parameter: watchmodeId' },
+      { error: 'Missing or invalid required parameter: watchmodeId' },
       { status: 400 }
     )
   }
 
   const cachedTitle = await prisma.cachedTitle.findUnique({
-    where: { watchmodeId: parseInt(watchmodeId) },
+    where: { watchmodeId },
   })
 
   if (!cachedTitle) {

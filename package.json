@@ -19,5 +19,8 @@
   "packageManager": "npm@10.8.0",
   "engines": {
     "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@upstash/ratelimit": "^2.0.8"
   }
 }

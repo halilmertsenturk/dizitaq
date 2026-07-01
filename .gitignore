@@ -10,3 +10,6 @@ dist/
 turbo/.cache
 .cursor/
 .DS_Store
+
+.vercel
+.env*

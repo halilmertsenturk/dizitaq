@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { searchTitles, WatchmodeAPIError } from '@/services/watchmode'
 import type { TitleFilters } from '@dizitaq/shared'
+import { parseId } from '@/lib/security'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -13,12 +14,8 @@ export async function GET(request: NextRequest) {
     'min-rating': searchParams.get('min-rating')
       ? parseFloat(searchParams.get('min-rating')!)
       : undefined,
-    page: searchParams.get('page')
-      ? parseInt(searchParams.get('page')!)
-      : 1,
-    limit: searchParams.get('limit')
-      ? parseInt(searchParams.get('limit')!)
-      : 20,
+    page: parseId(searchParams.get('page')) ?? 1,
+    limit: parseId(searchParams.get('limit')) ?? 20,
   }
 
   try {
@@ -27,7 +24,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     if (error instanceof WatchmodeAPIError) {
       return NextResponse.json(
-        { error: error.message, endpoint: error.endpoint },
+        { error: error.message },
         { status: error.status ?? 500 }
       )
     }

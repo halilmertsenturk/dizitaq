@@ -5,11 +5,13 @@ import GitHubProvider from 'next-auth/providers/github'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
+import { getLoginLimiter } from '@/lib/security'
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: {
     strategy: 'jwt',
+    maxAge: 7 * 24 * 60 * 60,
   },
   pages: {
     signIn: '/auth/login',
@@ -25,6 +27,10 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error('Email and password are required')
+        }
+
+        if (credentials.email.length > 255) {
+          throw new Error('Email too long')
         }
 
         const user = await prisma.user.findUnique({

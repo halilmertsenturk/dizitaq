@@ -9,6 +9,10 @@ vi.mock('@/lib/prisma', () => ({
   prisma: mockPrisma,
 }))
 
+vi.mock('@/lib/redis', () => ({
+  redis: null,
+}))
+
 vi.mock('bcryptjs', () => ({
   default: { hash: vi.fn(() => 'hashed-password-123') },
   hash: vi.fn(() => 'hashed-password-123'),
@@ -22,8 +26,15 @@ function createRequest(body: unknown) {
   return new NextRequest('http://localhost:3000/api/auth/register', {
     method: 'POST',
     body: JSON.stringify(body),
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Origin': 'http://localhost:3000',
+    },
   })
+}
+
+function validPayload() {
+  return { name: 'Test User', email: 'test@example.com', password: 'Password123' }
 }
 
 describe('POST /api/auth/register', () => {
@@ -36,7 +47,7 @@ describe('POST /api/auth/register', () => {
     })
 
     const { POST } = await import('@/app/api/auth/register/route')
-    const req = createRequest({ name: 'Test User', email: 'test@example.com', password: 'password123' })
+    const req = createRequest(validPayload())
     const response = await POST(req)
     const json = await response.json()
 
@@ -54,45 +65,103 @@ describe('POST /api/auth/register', () => {
     )
   })
 
-  it('returns 400 when email is missing', async () => {
+  it('returns 400 when name is missing', async () => {
     const { POST } = await import('@/app/api/auth/register/route')
-    const req = createRequest({ password: 'password123' })
+    const { name, ...rest } = validPayload()
+    const req = createRequest(rest)
     const response = await POST(req)
     const json = await response.json()
 
     expect(response.status).toBe(400)
-    expect(json.error).toBe('Email and password are required')
+    expect(json.error).toBe('Required')
+  })
+
+  it('returns 400 when email is missing', async () => {
+    const { POST } = await import('@/app/api/auth/register/route')
+    const req = createRequest({ name: 'Test User', password: 'Password123' })
+    const response = await POST(req)
+    const json = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(json.error).toBeDefined()
   })
 
   it('returns 400 when password is missing', async () => {
     const { POST } = await import('@/app/api/auth/register/route')
-    const req = createRequest({ email: 'test@example.com' })
+    const req = createRequest({ name: 'Test User', email: 'test@example.com' })
     const response = await POST(req)
     const json = await response.json()
 
     expect(response.status).toBe(400)
-    expect(json.error).toBe('Email and password are required')
+    expect(json.error).toBeDefined()
   })
 
   it('returns 400 when password is too short', async () => {
     const { POST } = await import('@/app/api/auth/register/route')
-    const req = createRequest({ email: 'test@example.com', password: '12345' })
+    const req = createRequest({ name: 'Test User', email: 'test@example.com', password: 'Ab1' })
     const response = await POST(req)
     const json = await response.json()
 
     expect(response.status).toBe(400)
-    expect(json.error).toBe('Password must be at least 6 characters')
+    expect(json.error).toContain('at least 8')
+  })
+
+  it('returns 400 when password lacks uppercase', async () => {
+    const { POST } = await import('@/app/api/auth/register/route')
+    const req = createRequest({ name: 'Test User', email: 'test@example.com', password: 'password123' })
+    const response = await POST(req)
+    const json = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(json.error).toContain('uppercase')
+  })
+
+  it('returns 400 when password lacks digit', async () => {
+    const { POST } = await import('@/app/api/auth/register/route')
+    const req = createRequest({ name: 'Test User', email: 'test@example.com', password: 'PasswordNoDigit' })
+    const response = await POST(req)
+    const json = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(json.error).toContain('digit')
+  })
+
+  it('returns 400 when email is invalid format', async () => {
+    const { POST } = await import('@/app/api/auth/register/route')
+    const req = createRequest({ name: 'Test User', email: 'not-an-email', password: 'Password123' })
+    const response = await POST(req)
+    const json = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(json.error).toContain('Invalid email')
   })
 
   it('returns 409 when email already exists', async () => {
     mockPrisma.user.findUnique.mockResolvedValue({ id: 'existing-user', email: 'test@example.com' })
 
     const { POST } = await import('@/app/api/auth/register/route')
-    const req = createRequest({ email: 'test@example.com', password: 'password123' })
+    const req = createRequest(validPayload())
     const response = await POST(req)
     const json = await response.json()
 
     expect(response.status).toBe(409)
     expect(json.error).toBe('Email already in use')
+  })
+
+  it('returns 403 when origin is invalid (CSRF)', async () => {
+    const { POST } = await import('@/app/api/auth/register/route')
+    const req = new NextRequest('http://localhost:3000/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(validPayload()),
+      headers: {
+        'Content-Type': 'application/json',
+        'Origin': 'https://evil-site.com',
+      },
+    })
+    const response = await POST(req)
+    const json = await response.json()
+
+    expect(response.status).toBe(403)
+    expect(json.error).toBe('CSRF validation failed')
   })
 })
