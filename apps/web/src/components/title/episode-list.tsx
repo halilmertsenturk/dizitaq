@@ -1,10 +1,16 @@
 'use client'
 
+import Image from 'next/image'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import type { WatchmodeSeason } from '@dizitaq/shared'
+import { Film } from 'lucide-react'
 
 interface EpisodeListProps {
   seasons: WatchmodeSeason[]
+}
+
+function formatEp(season: number, ep: number): string {
+  return `S${String(season).padStart(2, '0')}E${String(ep).padStart(2, '0')}`
 }
 
 export function EpisodeList({ seasons }: EpisodeListProps) {
@@ -25,24 +31,40 @@ export function EpisodeList({ seasons }: EpisodeListProps) {
               </span>
             </AccordionTrigger>
             <AccordionContent>
-              <div className="space-y-2">
+              <div className="space-y-2 pt-2">
                 {season.episodes.map((ep) => (
                   <div
                     key={ep.ep_num}
-                    className="flex gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
+                    className="flex gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
                   >
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-medium">
-                      {ep.ep_num}
-                    </div>
+                    {ep.image ? (
+                      <div className="relative w-24 h-16 shrink-0 rounded-md overflow-hidden bg-muted">
+                        <Image
+                          src={ep.image}
+                          alt={ep.title}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex w-24 h-16 shrink-0 items-center justify-center rounded-md bg-muted">
+                        <Film className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono text-muted-foreground whitespace-nowrap">
+                          {formatEp(season.season_number, ep.ep_num)}
+                        </span>
+                      </div>
                       <p className="text-sm font-medium truncate">{ep.title}</p>
                       {ep.synopsis && (
-                        <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                        <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
                           {ep.synopsis}
                         </p>
                       )}
                       {ep.air_date && (
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs text-muted-foreground mt-0.5">
                           {ep.air_date}
                         </p>
                       )}
