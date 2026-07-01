@@ -14,7 +14,7 @@ const mockFetch = vi.fn(async (url: string) => {
   }
 })
 
-global.fetch = mockFetch
+global.fetch = mockFetch as unknown as typeof global.fetch
 
 function mockNextResponse(data: unknown) {
   mockResponseQueue.push({ ok: true, data })

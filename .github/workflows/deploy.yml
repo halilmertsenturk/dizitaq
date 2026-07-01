@@ -22,6 +22,12 @@ jobs:
         run: npx prisma generate
         working-directory: apps/web
 
+      - name: Run tests
+        run: npx vitest run
+        working-directory: apps/web
+        env:
+          WATCHMODE_API_KEY: ${{ secrets.WATCHMODE_API_KEY }}
+
       - name: Build project
         run: npm run build
 
