@@ -31,12 +31,16 @@ export interface WatchmodeSource {
 }
 
 export interface WatchmodeEpisode {
+  id: number
   season_number: number
   episode_number: number
-  title: string
-  synopsis: string | null
-  air_date: string | null
-  image: string | null
+  name: string
+  overview: string | null
+  thumbnail_url: string | null
+  release_date: string | null
+  runtime_minutes: number | null
+  tmdb_id: number | null
+  imdb_id: string | null
 }
 
 export interface WatchmodeSeason {

@@ -34,14 +34,14 @@ export function EpisodeList({ seasons }: EpisodeListProps) {
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 pt-2">
                 {season.episodes.map((ep) => (
                   <div
-                    key={ep.episode_number}
+                    key={ep.id}
                     className="flex gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors"
                   >
-                    {ep.image ? (
+                    {ep.thumbnail_url ? (
                       <div className="relative w-20 h-14 shrink-0 rounded-md overflow-hidden bg-muted">
                         <Image
-                          src={ep.image}
-                          alt={ep.title}
+                          src={ep.thumbnail_url}
+                          alt={ep.name}
                           fill
                           className="object-cover"
                           sizes="80px"
@@ -56,15 +56,15 @@ export function EpisodeList({ seasons }: EpisodeListProps) {
                       <span className="text-xs font-mono text-muted-foreground">
                         {formatEp(season.season_number, ep.episode_number)}
                       </span>
-                      <p className="text-sm font-medium truncate">{ep.title}</p>
-                      {ep.synopsis && (
+                      <p className="text-sm font-medium truncate">{ep.name}</p>
+                      {ep.overview && (
                         <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-                          {ep.synopsis}
+                          {ep.overview}
                         </p>
                       )}
-                      {ep.air_date && (
+                      {ep.release_date && (
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          {ep.air_date}
+                          {ep.release_date}
                         </p>
                       )}
                     </div>
