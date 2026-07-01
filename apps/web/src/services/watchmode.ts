@@ -113,11 +113,19 @@ async function fetchPosterForTitle(id: number): Promise<string | null> {
 }
 
 async function enrichWithPosters(titles: WatchmodeTitle[]): Promise<WatchmodeTitle[]> {
-  const posterResults = await Promise.allSettled(
-    titles.map(t => fetchPosterForTitle(t.id))
-  )
-  return titles.map((t, i) => {
-    const poster = posterResults[i].status === 'fulfilled' ? posterResults[i].value : null
+  const posters = new Map<number, string | null>()
+  const ids = titles.map(t => t.id)
+  const batchSize = 5
+  for (let i = 0; i < ids.length; i += batchSize) {
+    const batch = ids.slice(i, i + batchSize)
+    const results = await Promise.allSettled(batch.map(id => fetchPosterForTitle(id)))
+    for (let j = 0; j < batch.length; j++) {
+      const r = results[j]
+      posters.set(batch[j], r.status === 'fulfilled' ? r.value : null)
+    }
+  }
+  return titles.map(t => {
+    const poster = posters.get(t.id)
     return poster ? { ...t, poster } : t
   })
 }
