@@ -14,25 +14,29 @@ async function getUserId(): Promise<string | null> {
 // Ensure a CachedTitle exists for a given watchmode ID
 async function ensureTitle(watchmodeId: number): Promise<string> {
   const existing = await prisma.cachedTitle.findUnique({ where: { watchmodeId } })
-  if (existing) return existing.id
+  if (existing && existing.title !== `Title ${watchmodeId}`) return existing.id
 
   const details = await getTitleDetails(watchmodeId)
 
-  const created = await prisma.cachedTitle.create({
-    data: {
-      watchmodeId,
-      title: details.title,
-      type: details.type,
-      year: details.year,
-      genres: details.genres,
-      poster: details.poster,
-      rating: details.rating,
-      plot: details.plot,
-      imdbId: details.imdb_id,
-      tmdbId: details.tmdb_id,
-    },
+  const data = {
+    watchmodeId,
+    title: details.title,
+    type: details.type,
+    year: details.year,
+    genres: details.genres,
+    poster: details.poster,
+    rating: details.rating,
+    plot: details.plot,
+    imdbId: details.imdb_id,
+    tmdbId: details.tmdb_id,
+  }
+
+  const updated = await prisma.cachedTitle.upsert({
+    where: { watchmodeId },
+    update: data,
+    create: data,
   })
-  return created.id
+  return updated.id
 }
 
 export async function GET() {
