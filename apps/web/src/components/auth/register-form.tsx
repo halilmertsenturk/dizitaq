@@ -73,6 +73,20 @@ export function RegisterForm() {
             {loading ? 'Creating account...' : 'Create Account'}
           </Button>
         </form>
+
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+          <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">Or continue with</span></div>
+        </div>
+
+        <div className="space-y-2">
+          <Button variant="outline" className="w-full" onClick={() => signIn('google', { callbackUrl: '/' }).catch(() => toast({ title: 'Error', description: 'Google sign-in is not configured', variant: 'destructive' }))}>
+            Google
+          </Button>
+          <Button variant="outline" className="w-full" onClick={() => signIn('github', { callbackUrl: '/' }).catch(() => toast({ title: 'Error', description: 'GitHub sign-in is not configured', variant: 'destructive' }))}>
+            GitHub
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )

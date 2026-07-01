@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import { Toaster } from '@/components/ui/toaster'
 import '@/styles/globals.css'
 import { Providers } from './providers'
 
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </Providers>
         <Analytics />
         <SpeedInsights />
+        <Toaster />
       </body>
     </html>
   )
