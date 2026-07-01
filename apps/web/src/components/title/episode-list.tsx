@@ -31,33 +31,31 @@ export function EpisodeList({ seasons }: EpisodeListProps) {
               </span>
             </AccordionTrigger>
             <AccordionContent>
-              <div className="space-y-2 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 pt-2">
                 {season.episodes.map((ep) => (
                   <div
                     key={ep.episode_number}
-                    className="flex gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                    className="flex gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors"
                   >
                     {ep.image ? (
-                      <div className="relative w-24 h-16 shrink-0 rounded-md overflow-hidden bg-muted">
+                      <div className="relative w-20 h-14 shrink-0 rounded-md overflow-hidden bg-muted">
                         <Image
                           src={ep.image}
                           alt={ep.title}
                           fill
                           className="object-cover"
-                          sizes="96px"
+                          sizes="80px"
                         />
                       </div>
                     ) : (
-                      <div className="flex w-24 h-16 shrink-0 items-center justify-center rounded-md bg-muted">
-                        <Film className="h-5 w-5 text-muted-foreground" />
+                      <div className="flex w-20 h-14 shrink-0 items-center justify-center rounded-md bg-muted">
+                        <Film className="h-4 w-4 text-muted-foreground" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono text-muted-foreground whitespace-nowrap">
-                          {formatEp(season.season_number, ep.episode_number)}
-                        </span>
-                      </div>
+                      <span className="text-xs font-mono text-muted-foreground">
+                        {formatEp(season.season_number, ep.episode_number)}
+                      </span>
                       <p className="text-sm font-medium truncate">{ep.title}</p>
                       {ep.synopsis && (
                         <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">

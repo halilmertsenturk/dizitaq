@@ -48,7 +48,7 @@ export function TitleDetail({ data, loading, error, isInWatchlist, onToggleWatch
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row gap-8">
+      <div className="flex flex-col md:flex-row gap-8 items-start">
         {/* Poster */}
         <div className="relative w-full md:w-[350px] aspect-[2/3] shrink-0">
           {data.poster ? (
