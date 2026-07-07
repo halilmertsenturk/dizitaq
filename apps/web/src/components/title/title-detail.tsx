@@ -129,18 +129,27 @@ export function TitleDetail({ data, loading, error, isInWatchlist, onToggleWatch
             <p className="text-muted-foreground leading-relaxed">{data.plot}</p>
           )}
 
-          {/* Watchlist button */}
-          <Button
-            onClick={onToggleWatchlist}
-            variant={isInWatchlist ? 'secondary' : 'default'}
-            className="gap-2"
-          >
-            {isInWatchlist ? (
-              <><Check className="h-4 w-4" /> In Watchlist</>
-            ) : (
-              <><Plus className="h-4 w-4" /> Add to Watchlist</>
-            )}
-          </Button>
+          {/* Action buttons */}
+          <div className="flex flex-wrap gap-3">
+            <a
+              href={`/watch/${data.id}`}
+              className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
+            >
+              <Play className="h-4 w-4 fill-current" />
+              Watch Now
+            </a>
+            <Button
+              onClick={onToggleWatchlist}
+              variant={isInWatchlist ? 'secondary' : 'default'}
+              className="gap-2"
+            >
+              {isInWatchlist ? (
+                <><Check className="h-4 w-4" /> In Watchlist</>
+              ) : (
+                <><Plus className="h-4 w-4" /> Add to Watchlist</>
+              )}
+            </Button>
+          </div>
 
           {/* Streaming platforms */}
           {data.sources && data.sources.length > 0 && (

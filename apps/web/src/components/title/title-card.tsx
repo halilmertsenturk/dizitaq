@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { Badge } from '@/components/ui/badge'
 import type { WatchmodeTitle } from '@dizitaq/shared'
 import { formatRating, formatYear } from '@/lib/utils'
-import { Star, Film, Tv } from 'lucide-react'
+import { Star, Film, Tv, Play } from 'lucide-react'
 
 interface TitleCardProps {
   title: WatchmodeTitle
@@ -29,7 +29,7 @@ function getPlaceholderGradient(id: number): string {
 
 export function TitleCard({ title, priority = false }: TitleCardProps) {
   return (
-    <Link href={`/title/${title.id}`} className="title-card group block aspect-[2/3]">
+    <Link href={`/title/${title.id}`} className="title-card group block aspect-[2/3] relative">
       <div className="relative h-full w-full">
         {title.poster ? (
           <Image
@@ -49,6 +49,14 @@ export function TitleCard({ title, priority = false }: TitleCardProps) {
         )}
 
         <div className="title-card-overlay">
+          <a
+            href={`/watch/${title.id}`}
+            className="mb-2 inline-flex items-center gap-1.5 rounded bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-500 transition-colors w-fit"
+            onClick={e => e.stopPropagation()}
+          >
+            <Play className="h-3 w-3 fill-current" />
+            Watch
+          </a>
           <h3 className="text-sm font-semibold text-white line-clamp-2 mb-1">
             {title.title}
           </h3>

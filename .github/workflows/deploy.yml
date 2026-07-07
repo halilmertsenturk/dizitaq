@@ -22,6 +22,12 @@ jobs:
         run: npx prisma generate
         working-directory: apps/web
 
+      - name: Push database schema
+        run: npx prisma db push --skip-generate
+        working-directory: apps/web
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
       - name: Run tests
         run: npx vitest run
         working-directory: apps/web

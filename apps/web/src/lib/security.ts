@@ -76,3 +76,76 @@ export function parseId(value: string | null): number | null {
   const num = parseInt(trimmed, 10)
   return Number.isNaN(num) ? null : num
 }
+
+// ─── New rate limiters for streaming features ───
+
+let _adminLimiter: Ratelimit | null = null
+let _commentLimiter: Ratelimit | null = null
+let _reviewLimiter: Ratelimit | null = null
+let _reportLimiter: Ratelimit | null = null
+let _videoLimiter: Ratelimit | null = null
+let _historyLimiter: Ratelimit | null = null
+let _favoriteLimiter: Ratelimit | null = null
+
+export function getAdminLimiter(): Ratelimit | null {
+  if (!_adminLimiter) _adminLimiter = getLimiter('admin:login', 5, 60000)
+  return _adminLimiter
+}
+
+export function getCommentLimiter(): Ratelimit | null {
+  if (!_commentLimiter) _commentLimiter = getLimiter('comment', 10, 60000)
+  return _commentLimiter
+}
+
+export function getReviewLimiter(): Ratelimit | null {
+  if (!_reviewLimiter) _reviewLimiter = getLimiter('review', 10, 60000)
+  return _reviewLimiter
+}
+
+export function getReportLimiter(): Ratelimit | null {
+  if (!_reportLimiter) _reportLimiter = getLimiter('report', 5, 60000)
+  return _reportLimiter
+}
+
+export function getVideoLimiter(): Ratelimit | null {
+  if (!_videoLimiter) _videoLimiter = getLimiter('video', 30, 60000)
+  return _videoLimiter
+}
+
+export function getHistoryLimiter(): Ratelimit | null {
+  if (!_historyLimiter) _historyLimiter = getLimiter('history', 30, 60000)
+  return _historyLimiter
+}
+
+export function getFavoriteLimiter(): Ratelimit | null {
+  if (!_favoriteLimiter) _favoriteLimiter = getLimiter('favorite', 30, 60000)
+  return _favoriteLimiter
+}
+
+// ─── Embed URL validation ───
+
+export function getWhitelistedDomains(): string[] {
+  const raw = process.env.EMBED_DOMAINS ?? ''
+  if (!raw) return []
+  return raw.split(',').map(d => d.trim().toLowerCase()).filter(Boolean)
+}
+
+export function validateEmbedUrl(url: string): { valid: boolean; error?: string } {
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'https:') {
+      return { valid: false, error: 'Embed URL must use HTTPS' }
+    }
+    const domains = getWhitelistedDomains()
+    if (domains.length > 0) {
+      const hostname = parsed.hostname.toLowerCase()
+      const allowed = domains.some(d => hostname === d || hostname.endsWith('.' + d))
+      if (!allowed) {
+        return { valid: false, error: 'Embed domain is not in the whitelist' }
+      }
+    }
+    return { valid: true }
+  } catch {
+    return { valid: false, error: 'Invalid URL format' }
+  }
+}

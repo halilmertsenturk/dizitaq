@@ -39,6 +39,13 @@ export function Navbar() {
                 <List className="h-4 w-4" />
                 Watchlist
               </Link>
+              <Link
+                href="/profile"
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <User className="h-4 w-4" />
+                Profile
+              </Link>
 
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">{session.user?.name}</span>
@@ -86,6 +93,13 @@ export function Navbar() {
                 onClick={() => setMobileOpen(false)}
               >
                 <List className="h-4 w-4" /> Watchlist
+              </Link>
+              <Link
+                href="/profile"
+                className="flex items-center gap-2 py-2 text-sm"
+                onClick={() => setMobileOpen(false)}
+              >
+                <User className="h-4 w-4" /> Profile
               </Link>
               <button
                 onClick={() => { signOut(); setMobileOpen(false) }}

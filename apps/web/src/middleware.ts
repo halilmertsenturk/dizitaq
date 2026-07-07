@@ -37,6 +37,11 @@ export function middleware(request: NextRequest) {
   response.headers.set('X-Frame-Options', 'DENY')
   response.headers.set('X-XSS-Protection', '1; mode=block')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  const embedDomains = process.env.EMBED_DOMAINS ?? ''
+  const frameSrc = embedDomains
+    ? `frame-src 'self' ${embedDomains.split(',').join(' ')}`
+    : "frame-src 'self'"
+
   response.headers.set(
     'Content-Security-Policy',
     [
@@ -46,6 +51,7 @@ export function middleware(request: NextRequest) {
       "img-src 'self' data: blob: https://cdn.watchmode.com https://img.watchmode.com https://image.tmdb.org",
       "font-src 'self'",
       "connect-src 'self' https://api.watchmode.com https://vitals.vercel-insights.com",
+      frameSrc,
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
