@@ -39,18 +39,18 @@ export function middleware(request: NextRequest) {
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   const embedDomains = process.env.EMBED_DOMAINS ?? ''
   const frameSrc = embedDomains
-    ? `frame-src 'self' ${embedDomains.split(',').join(' ')}`
-    : "frame-src 'self'"
+    ? `frame-src * ${embedDomains.split(',').join(' ')}`
+    : "frame-src *"
 
   response.headers.set(
     'Content-Security-Policy',
     [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://va.vercel-scripts.com",
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://cdn.watchmode.com https://img.watchmode.com https://image.tmdb.org",
-      "font-src 'self'",
-      "connect-src 'self' https://api.watchmode.com https://vitals.vercel-insights.com",
+      "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:",
+      "script-src * 'unsafe-inline' 'unsafe-eval'",
+      "style-src * 'unsafe-inline'",
+      "img-src * data: blob:",
+      "font-src * data:",
+      "connect-src *",
       frameSrc,
       "frame-ancestors 'none'",
       "base-uri 'self'",
