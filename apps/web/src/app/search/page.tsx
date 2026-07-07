@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { SearchBar } from '@/components/search/search-bar'
 import { Filters } from '@/components/search/filters'
 import { TitleGrid } from '@/components/title/title-grid'
@@ -9,11 +10,21 @@ import { useDebounce } from '@/hooks/use-debounce'
 import { Search } from 'lucide-react'
 import type { TitleFilters } from '@dizitaq/shared'
 
-export default function SearchPage() {
-  const [query, setQuery] = useState('')
-  const [genre, setGenre] = useState('')
-  const [year, setYear] = useState('')
-  const [type, setType] = useState<string>('')
+function SearchContent() {
+  const searchParams = useSearchParams()
+  const [query, setQuery] = useState(searchParams.get('query') ?? '')
+  const [genre, setGenre] = useState(searchParams.get('genre') ?? '')
+  const [year, setYear] = useState(searchParams.get('year') ?? '')
+  const [type, setType] = useState<string>(searchParams.get('type') ?? '')
+
+  useEffect(() => {
+    const g = searchParams.get('genre')
+    const y = searchParams.get('year')
+    const t = searchParams.get('type')
+    if (g) setGenre(g)
+    if (y) setYear(y)
+    if (t) setType(t)
+  }, [searchParams])
 
   const debouncedQuery = useDebounce(query, 400)
 
@@ -55,7 +66,6 @@ export default function SearchPage() {
         </div>
       </div>
 
-      {/* Results info */}
       <div className="mb-6">
         {searchFilters && searchData && (
           <p className="text-muted-foreground text-sm">
@@ -73,5 +83,19 @@ export default function SearchPage() {
 
       <TitleGrid titles={titles ?? []} loading={loading} error={error} />
     </div>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center py-20">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+        </div>
+      </div>
+    }>
+      <SearchContent />
+    </Suspense>
   )
 }

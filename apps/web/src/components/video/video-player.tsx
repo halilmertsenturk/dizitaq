@@ -16,11 +16,13 @@ interface Source {
 interface VideoPlayerProps {
   watchmodeId: number
   episodeId?: string
+  season?: number
+  episode?: number
   title: string
   onWatch?: () => void
 }
 
-export function VideoPlayer({ watchmodeId, episodeId, title, onWatch }: VideoPlayerProps) {
+export function VideoPlayer({ watchmodeId, episodeId, season, episode, title, onWatch }: VideoPlayerProps) {
   const [sources, setSources] = useState<Source[]>([])
   const [activeSource, setActiveSource] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -30,7 +32,10 @@ export function VideoPlayer({ watchmodeId, episodeId, title, onWatch }: VideoPla
 
   useEffect(() => {
     const params = new URLSearchParams({ watchmodeId: watchmodeId.toString() })
-    if (episodeId) params.set('episodeId', episodeId)
+    if (season !== undefined && episode !== undefined) {
+      params.set('season', String(season))
+      params.set('episode', String(episode))
+    }
 
     fetch(`/api/video?${params}`)
       .then(res => {
@@ -87,8 +92,7 @@ export function VideoPlayer({ watchmodeId, episodeId, title, onWatch }: VideoPla
           ref={iframeRef}
           src={currentSource.embedUrl}
           className="absolute inset-0 h-full w-full"
-          allow="autoplay; encrypted-media; fullscreen"
-          sandbox="allow-scripts allow-same-origin allow-forms"
+          allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
           allowFullScreen
           title={title}
         />

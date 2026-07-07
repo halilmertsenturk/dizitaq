@@ -131,13 +131,25 @@ export function TitleDetail({ data, loading, error, isInWatchlist, onToggleWatch
 
           {/* Action buttons */}
           <div className="flex flex-wrap gap-3">
-            <a
-              href={`/watch/${data.id}`}
-              className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
-            >
-              <Play className="h-4 w-4 fill-current" />
-              Watch Now
-            </a>
+            {data.type === 'movie' ? (
+              <a
+                href={`/watch/${data.id}`}
+                className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
+              >
+                <Play className="h-4 w-4 fill-current" />
+                Watch Now
+              </a>
+            ) : (
+              data.seasons && data.seasons.length > 0 && data.seasons[0].episodes.length > 0 && (
+                <a
+                  href={`/watch/${data.id}/${data.seasons[0].season_number}/${data.seasons[0].episodes[0].episode_number}`}
+                  className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
+                >
+                  <Play className="h-4 w-4 fill-current" />
+                  Watch Now
+                </a>
+              )
+            )}
             <Button
               onClick={onToggleWatchlist}
               variant={isInWatchlist ? 'secondary' : 'default'}
@@ -165,7 +177,7 @@ export function TitleDetail({ data, loading, error, isInWatchlist, onToggleWatch
 
           {/* Episodes */}
           {data.seasons && data.seasons.length > 0 && (
-            <EpisodeList seasons={data.seasons} />
+            <EpisodeList watchmodeId={data.id} seasons={data.seasons} />
           )}
         </div>
       </div>

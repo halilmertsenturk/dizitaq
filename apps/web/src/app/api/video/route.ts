@@ -14,18 +14,15 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url)
   const watchmodeId = parseId(searchParams.get('watchmodeId'))
-  const episodeId = searchParams.get('episodeId')
+  const seasonParam = parseId(searchParams.get('season'))
+  const episodeParam = parseId(searchParams.get('episode'))
 
-  if (!watchmodeId && !episodeId) {
-    return NextResponse.json({ error: 'Provide watchmodeId or episodeId' }, { status: 400 })
+  if (!watchmodeId) {
+    return NextResponse.json({ error: 'Provide watchmodeId' }, { status: 400 })
   }
 
-  const where = episodeId
-    ? { episodeId }
-    : { watchmodeId }
-
   const sources = await prisma.videoSource.findMany({
-    where: { ...where, isActive: true },
+    where: { watchmodeId, isActive: true },
     select: {
       id: true,
       embedUrl: true,
@@ -37,5 +34,12 @@ export async function GET(request: NextRequest) {
     orderBy: { createdAt: 'desc' },
   })
 
-  return NextResponse.json({ sources })
+  const mapped = sources.map(s => ({
+    ...s,
+    embedUrl: (seasonParam && episodeParam)
+      ? s.embedUrl.replace('{season}', String(seasonParam)).replace('{episode}', String(episodeParam))
+      : s.embedUrl,
+  }))
+
+  return NextResponse.json({ sources: mapped })
 }

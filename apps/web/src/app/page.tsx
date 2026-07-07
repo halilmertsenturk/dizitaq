@@ -66,7 +66,7 @@ export default function HomePage() {
               <ChevronRight className="h-4 w-4" />
             </Button>
           </Link>
-          <Link href="/trending">
+          <Link href="/search">
             <Button size="lg" variant="outline" className="gap-2">
               <TrendingUp className="h-4 w-4" />
               Trending

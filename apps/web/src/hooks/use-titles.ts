@@ -11,9 +11,6 @@ export function useTrending(options: UseTitlesOptions = {}) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(options.initialPage ?? 1)
-  const typeRef = useRef(options.type)
-  typeRef.current = options.type
-
   const abortRef = useRef<AbortController | null>(null)
 
   const fetchTitles = useCallback(async () => {
@@ -21,7 +18,7 @@ export function useTrending(options: UseTitlesOptions = {}) {
     const controller = new AbortController()
     abortRef.current = controller
 
-    const currentType = typeRef.current
+    const currentType = options.type
     setLoading(true)
     setError(null)
 
@@ -39,7 +36,7 @@ export function useTrending(options: UseTitlesOptions = {}) {
     } finally {
       setLoading(false)
     }
-  }, [page])
+  }, [page, options.type])
 
   useEffect(() => {
     fetchTitles()

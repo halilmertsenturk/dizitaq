@@ -50,7 +50,7 @@ export function TitleCard({ title, priority = false }: TitleCardProps) {
 
         <div className="title-card-overlay">
           <a
-            href={`/watch/${title.id}`}
+            href={title.type === 'movie' ? `/watch/${title.id}` : `/title/${title.id}`}
             className="mb-2 inline-flex items-center gap-1.5 rounded bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-500 transition-colors w-fit"
             onClick={e => e.stopPropagation()}
           >

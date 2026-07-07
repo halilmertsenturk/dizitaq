@@ -88,6 +88,8 @@ export default function WatchEpisodePage({
       <VideoPlayer
         watchmodeId={watchmodeId}
         episodeId={episodeId}
+        season={seasonNum}
+        episode={episodeNum}
         title={`S${seasonNum}E${episodeNum} - ${episode.name}`}
         onWatch={handleWatch}
       />

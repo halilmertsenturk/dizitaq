@@ -1,11 +1,13 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import type { WatchmodeSeason } from '@dizitaq/shared'
 import { Film } from 'lucide-react'
 
 interface EpisodeListProps {
+  watchmodeId: number
   seasons: WatchmodeSeason[]
 }
 
@@ -13,7 +15,7 @@ function formatEp(season: number, episode: number): string {
   return `S${String(season).padStart(2, '0')}E${String(episode).padStart(2, '0')}`
 }
 
-export function EpisodeList({ seasons }: EpisodeListProps) {
+export function EpisodeList({ watchmodeId, seasons }: EpisodeListProps) {
   if (!seasons || seasons.length === 0) return null
 
   return (
@@ -33,8 +35,9 @@ export function EpisodeList({ seasons }: EpisodeListProps) {
             <AccordionContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 pt-2">
                 {season.episodes.map((ep) => (
-                  <div
+                  <Link
                     key={ep.id}
+                    href={`/watch/${watchmodeId}/${season.season_number}/${ep.episode_number}`}
                     className="flex gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors"
                   >
                     {ep.thumbnail_url ? (
@@ -68,9 +71,9 @@ export function EpisodeList({ seasons }: EpisodeListProps) {
                         </p>
                       )}
                     </div>
-                  </div>
-                ))}
-              </div>
+                    </Link>
+                  ))}
+                </div>
             </AccordionContent>
           </AccordionItem>
         ))}
