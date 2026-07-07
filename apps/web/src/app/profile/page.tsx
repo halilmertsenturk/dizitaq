@@ -99,7 +99,7 @@ export default function ProfilePage() {
             history.map(h => (
               <Link
                 key={h.id}
-                href={`/watch/${h.title.watchmodeId}`}
+                href={h.title.type === 'movie' ? `/watch/${h.title.watchmodeId}` : `/title/${h.title.watchmodeId}`}
                 className="flex items-center gap-4 rounded-lg border border-zinc-800 bg-zinc-900 p-3 hover:bg-zinc-800 transition-colors"
               >
                 <div className="h-16 w-12 shrink-0 overflow-hidden rounded bg-zinc-800">
@@ -133,7 +133,7 @@ export default function ProfilePage() {
             favorites.map(f => (
               <Link
                 key={f.id}
-                href={`/watch/${f.title.watchmodeId}`}
+                href={f.title.type === 'movie' ? `/watch/${f.title.watchmodeId}` : `/title/${f.title.watchmodeId}`}
                 className="group relative aspect-[2/3] overflow-hidden rounded-lg bg-zinc-900"
               >
                 {f.title.poster ? (

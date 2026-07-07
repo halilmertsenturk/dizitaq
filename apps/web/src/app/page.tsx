@@ -86,7 +86,7 @@ export default function HomePage() {
             {history.map((h) => (
               <Link
                 key={`${h.title.watchmodeId}-${h.episode?.epNum ?? ''}`}
-                href={`/watch/${h.title.watchmodeId}`}
+                href={h.title.type === 'movie' ? `/watch/${h.title.watchmodeId}` : `/title/${h.title.watchmodeId}`}
                 className="group relative aspect-[2/3] overflow-hidden rounded-lg bg-zinc-900"
               >
                 {h.title.poster ? (

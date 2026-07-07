@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getVideoLimiter, parseId } from '@/lib/security'
 
+const SOURCE_PRIORITY: Record<string, number> = {
+  'CineX': 0,
+  'VidSrc': 1,
+  '2Embed': 2,
+  'VSEmbed': 3,
+  'MultiEmbed': 4,
+  'StreamSrc': 5,
+}
+
 export async function GET(request: NextRequest) {
   const limiter = getVideoLimiter()
   if (limiter) {
@@ -21,7 +30,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Provide watchmodeId' }, { status: 400 })
   }
 
-  const sources = await prisma.videoSource.findMany({
+  let sources = await prisma.videoSource.findMany({
     where: { watchmodeId, isActive: true },
     select: {
       id: true,
@@ -31,8 +40,9 @@ export async function GET(request: NextRequest) {
       language: true,
       isActive: true,
     },
-    orderBy: { createdAt: 'desc' },
   })
+
+  sources.sort((a, b) => (SOURCE_PRIORITY[a.sourceName] ?? 99) - (SOURCE_PRIORITY[b.sourceName] ?? 99))
 
   const mapped = sources.map(s => ({
     ...s,
