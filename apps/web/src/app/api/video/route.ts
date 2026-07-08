@@ -3,15 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getVideoLimiter, parseId } from '@/lib/security'
 
 const SOURCE_PRIORITY: Record<string, number> = {
-  'CineX': 0,
-  'VidLink': 1,
-  'vidsrc.to': 2,
-  'VidSrc Embed': 3,
-  '2Embed': 4,
-  'VidSrc': 5,
-  'VSEmbed': 6,
-  'MultiEmbed': 7,
-  'StreamSrc': 8,
+  'VidLink': 0,
 }
 
 export async function GET(request: NextRequest) {

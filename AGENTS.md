@@ -17,21 +17,13 @@ Monorepo (Turbo + npm workspaces): Next.js 14 (app router), Prisma (Neon Postgre
 
 ## Streaming Setup
 
-### Embed Sources (9 services × 6 titles = 54 sources, 2026-07-08)
+### Embed Sources (1 service × 6 titles = 6 sources, 2026-07-08)
 | Source | ID Type | URL Pattern | Notes |
 |--------|---------|-------------|-------|
-| **CineX** | TMDB | `https://cinextream.net/api/embed/{movie\|tv}/{tmdbId}/{season}/{episode}` | ÇÖKTÜ (502) — Nova/Atlas/Multi/CinetaroCDN tüm sunucular 502 dönüyor |
-| **VidLink** | TMDB | `https://vidlink.pro/{movie\|tv}/{tmdbId}/{season}/{episode}` | **YENİ** Next.js + JWPlayer, frame-blocking YOK, reklam YOK, en umut verici kaynak |
-| **vidsrc.to** | TMDB | `https://vidsrc.to/embed/{movie\|tv}/{tmdbId}/{season}/{episode}` | vsembed.ru üzerinden cloudorchestranova.com'a yönleniyor (403/çöktü) |
-| **VidSrc Embed** | TMDB | `https://vidsrc-embed.ru/embed/{movie\|tv}?tmdb={tmdbId}&season={season}&episode={episode}` | vsembed.ru'ya yönleniyor (çöktü) |
-| **2Embed** | TMDB | `https://www.2embed.stream/embed/{movie\|tv}/{tmdbId}/{season}/{episode}` | TMDB-based embed |
-| **VidSrc** | IMDB | `https://vidsrc.fyi/embed/{movie\|tv}/{imdbId}/{season}/{episode}` | Proxy → vsembed.ru (çöktü) |
-| **VSEmbed** | IMDB | `https://vsembed.ru/embed/{movie\|tv}/{imdbId}/{season}-{episode}` | cloudorchestranova.com 403 |
-| **MultiEmbed** | IMDB | `https://multiembed.mov/?video_id={imdbId}&s={season}&e={episode}&tmdb=1` | Bazen captcha, bazen "not found" |
-| **StreamSrc** | TMDB | `https://streamsrc.cc/watch/{movie\|series}/{tmdbId}` | Meta-embed, per-episode desteği yok |
+| **VidLink** | TMDB | `https://vidlink.pro/{movie\|tv}/{tmdbId}/{season}/{episode}` | Next.js + JWPlayer, frame-blocking YOK, reklam YOK, çalışıyor ✅ |
 
 ### Source Priority (in `/api/video/route.ts`)
-Custom sort order: `CineX → VidLink → vidsrc.to → VidSrc Embed → 2Embed → VidSrc → VSEmbed → MultiEmbed → StreamSrc`.
+Sadece `VidLink` kaldı, diğer tüm source'lar silindi.
 
 ### Embed Player Details
 - CSP: fully relaxed (`default-src *`, `frame-src *`, `script-src *`)
