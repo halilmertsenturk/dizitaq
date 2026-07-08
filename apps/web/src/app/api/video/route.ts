@@ -4,12 +4,13 @@ import { getVideoLimiter, parseId } from '@/lib/security'
 
 const SOURCE_PRIORITY: Record<string, number> = {
   'CineX': 0,
-  'VidSrc': 1,
-  '2Embed': 2,
-  'VSEmbed': 3,
-  'MultiEmbed': 4,
-  'StreamSrc': 5,
-  'VidCore': 6,
+  'vidsrc.to': 1,
+  'VidSrc Embed': 2,
+  '2Embed': 3,
+  'VidSrc': 4,
+  'VSEmbed': 5,
+  'MultiEmbed': 6,
+  'StreamSrc': 7,
 }
 
 export async function GET(request: NextRequest) {

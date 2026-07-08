@@ -94,8 +94,7 @@ export function VideoPlayer({ watchmodeId, episodeId, season, episode, title, on
           className="absolute inset-0 h-full w-full"
           allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
           allowFullScreen
-          referrerPolicy="no-referrer"
-          sandbox="allow-scripts allow-same-origin allow-forms"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
           title={title}
         />
       </div>

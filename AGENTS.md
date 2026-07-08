@@ -17,24 +17,25 @@ Monorepo (Turbo + npm workspaces): Next.js 14 (app router), Prisma (Neon Postgre
 
 ## Streaming Setup
 
-### Embed Sources (DB reseeded, 7 services × 6 titles = 42 sources)
+### Embed Sources (DB reseeded, 8 services × 6 titles = 48 sources)
 | Source | ID Type | URL Pattern | Notes |
 |--------|---------|-------------|-------|
-| **CineX** | TMDB | `https://cinextream.net/api/embed/{movie\|tv}/{tmdbId}/{season}/{episode}` | Best quality: Artplayer HLS, 5 internal servers (Nova/Atlas/MNest/Multi/CinetaroCDN), auto-failover, subtitle support, zero popup ads. Subtitles from Wyzie API + `cache.vdrk.site` (12 languages VTT, English default) |
-| **2Embed** | TMDB | `https://www.2embed.stream/embed/{movie\|tv}/{tmdbId}/{season}/{episode}` | Works, possibly same episode ordering as CineX |
-| **VidSrc** | IMDB | `https://vidsrc.fyi/embed/{movie\|tv}/{imdbId}/{season}/{episode}` | Proxy → vsembed.ru player |
+| **CineX** | TMDB | `https://cinextream.net/api/embed/{movie\|tv}/{tmdbId}/{season}/{episode}` | Best quality: Artplayer HLS, 5 internal servers (Nova/Atlas/MNest/Multi/CinetaroCDN), auto-failover, subtitle support, zero popup ads |
+| **vidsrc.to** | TMDB | `https://vidsrc.to/embed/{movie\|tv}/{tmdbId}/{season}/{episode}` | TMDB-based, supports ds_lang param, stable |
+| **VidSrc Embed** | TMDB | `https://vidsrc-embed.ru/embed/{movie\|tv}?tmdb={tmdbId}&season={season}&episode={episode}` | Official VidSrc API, query param format, supports ds_lang |
+| **2Embed** | TMDB | `https://www.2embed.stream/embed/{movie\|tv}/{tmdbId}/{season}/{episode}` | TMDB-based embed |
+| **VidSrc** | IMDB | `https://vidsrc.fyi/embed/{movie\|tv}/{imdbId}/{season}/{episode}` | Proxy → vsembed.ru player (legacy, may be unstable) |
 | **VSEmbed** | IMDB | `https://vsembed.ru/embed/{movie\|tv}/{imdbId}/{season}-{episode}` | Direct player, fewer ads |
 | **MultiEmbed** | IMDB | `https://multiembed.mov/?video_id={imdbId}&s={season}&e={episode}&tmdb=1` | Sometimes captcha, sometimes "not found" |
 | **StreamSrc** | TMDB | `https://streamsrc.cc/watch/{movie\|series}/{tmdbId}` | Meta-embed, no per-episode support |
-| **VidCore** | TMDB | `https://www.vidcore.org/embed/{movie\|tv}/{tmdbId}/{season}/{episode}?sub=tr` | TMDB ID tabanlı, `?sub=tr` ile Türkçe altyazı. Admin panelden manuel eklenir, `EMBED_DOMAINS`'e vidcore.org eklendi |
 
 ### Source Priority (in `/api/video/route.ts`)
-Custom sort order: `CineX → VidSrc → 2Embed → VSEmbed → MultiEmbed → StreamSrc → VidCore`. API changed from `createdAt: 'desc'` to `SOURCE_PRIORITY` map.
+Custom sort order: `CineX → vidsrc.to → VidSrc Embed → 2Embed → VidSrc → VSEmbed → MultiEmbed → StreamSrc`.
 
 ### Embed Player Details
 - CSP: fully relaxed (`default-src *`, `frame-src *`, `script-src *`)
-- iframe sandbox: `allow-scripts allow-same-origin allow-forms` (no `allow-popups` blocks ad popups)
-- `referrerPolicy="no-referrer"` — some embed services check referrer
+- iframe sandbox: `allow-scripts allow-same-origin allow-forms allow-popups`
+- referrerPolicy removed (was `no-referrer` — caused stream blocking)
 
 ### Continue Watching Navigation (FIXED)
 - **Home page** (`page.tsx`): series → `/title/[id]`, movie → `/watch/[id]` (uses `h.title.type`)
