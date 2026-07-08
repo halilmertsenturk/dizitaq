@@ -17,6 +17,22 @@ async function main() {
   let added = 0
 
   for (const t of titles) {
+    // VidLink (TMDB-based, uses JWPlayer, no frame blocking, no ads)
+    const vidLinkUrl = t.type === 'movie'
+      ? `https://vidlink.pro/movie/${t.tmdbId}`
+      : `https://vidlink.pro/tv/${t.tmdbId}/{season}/{episode}`
+
+    const existsVl = await prisma.videoSource.findFirst({
+      where: { watchmodeId: t.watchmodeId, episodeId: null, sourceName: 'VidLink' },
+    })
+    if (!existsVl) {
+      await prisma.videoSource.create({
+        data: { watchmodeId: t.watchmodeId, embedUrl: vidLinkUrl, sourceName: 'VidLink', language: 'en' },
+      })
+      console.log(`  ADD VidLink — ${t.title} (${t.type})`)
+      added++
+    }
+
     // vidsrc.to (TMDB-based, path format)
     const vidsrcToUrl = t.type === 'movie'
       ? `https://vidsrc.to/embed/movie/${t.tmdbId}`
