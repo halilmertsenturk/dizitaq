@@ -42,7 +42,12 @@ async function searchSubtitles(tmdbId: number, season?: number, episode?: number
   if (!res.ok) return null
 
   const data = await res.json()
-  return data?.data?.[0] ?? null
+  if (!data?.data) return null
+
+  // OpenSubtitles API doesn't strictly filter by language — filter client-side
+  return data.data.find(
+    (sub: any) => sub.attributes?.language === lang
+  ) ?? null
 }
 
 async function downloadSubtitleSrt(fileId: number): Promise<string | null> {
