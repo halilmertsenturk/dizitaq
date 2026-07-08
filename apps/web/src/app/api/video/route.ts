@@ -9,6 +9,7 @@ const SOURCE_PRIORITY: Record<string, number> = {
   'VSEmbed': 3,
   'MultiEmbed': 4,
   'StreamSrc': 5,
+  'VidCore': 6,
 }
 
 export async function GET(request: NextRequest) {
@@ -44,12 +45,15 @@ export async function GET(request: NextRequest) {
 
   sources.sort((a, b) => (SOURCE_PRIORITY[a.sourceName] ?? 99) - (SOURCE_PRIORITY[b.sourceName] ?? 99))
 
-  const mapped = sources.map(s => ({
-    ...s,
-    embedUrl: (seasonParam && episodeParam)
+  const mapped = sources.map(s => {
+    let embedUrl = (seasonParam && episodeParam)
       ? s.embedUrl.replace('{season}', String(seasonParam)).replace('{episode}', String(episodeParam))
-      : s.embedUrl,
-  }))
+      : s.embedUrl
+    if (s.sourceName === 'VidSrc') {
+      embedUrl += (embedUrl.includes('?') ? '&' : '?') + 'ds_lang=tr'
+    }
+    return { ...s, embedUrl }
+  })
 
   return NextResponse.json({ sources: mapped })
 }

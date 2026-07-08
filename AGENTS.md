@@ -17,18 +17,19 @@ Monorepo (Turbo + npm workspaces): Next.js 14 (app router), Prisma (Neon Postgre
 
 ## Streaming Setup
 
-### Embed Sources (DB reseeded, 6 services × 6 titles = 36 sources)
+### Embed Sources (DB reseeded, 7 services × 6 titles = 42 sources)
 | Source | ID Type | URL Pattern | Notes |
 |--------|---------|-------------|-------|
 | **CineX** | TMDB | `https://cinextream.net/api/embed/{movie\|tv}/{tmdbId}/{season}/{episode}` | Best quality: Artplayer HLS, 5 internal servers (Nova/Atlas/MNest/Multi/CinetaroCDN), auto-failover, subtitle support, zero popup ads. Subtitles from Wyzie API + `cache.vdrk.site` (12 languages VTT, English default) |
 | **2Embed** | TMDB | `https://www.2embed.stream/embed/{movie\|tv}/{tmdbId}/{season}/{episode}` | Works, possibly same episode ordering as CineX |
-| **VidSrc** | IMDB | `https://vidsrc.fyi/embed/{movie\|tv}/{imdbId}/{season}/{episode}` | Proxy → vsembed.ru player |
+| **VidSrc** | IMDB | `https://vidsrc.fyi/embed/{movie\|tv}/{imdbId}/{season}/{episode}` | Proxy → vsembed.ru player. API route appends `?ds_lang=tr` for Turkish subtitles |
 | **VSEmbed** | IMDB | `https://vsembed.ru/embed/{movie\|tv}/{imdbId}/{season}-{episode}` | Direct player, fewer ads |
 | **MultiEmbed** | IMDB | `https://multiembed.mov/?video_id={imdbId}&s={season}&e={episode}&tmdb=1` | Sometimes captcha, sometimes "not found" |
 | **StreamSrc** | TMDB | `https://streamsrc.cc/watch/{movie\|series}/{tmdbId}` | Meta-embed, no per-episode support |
+| **VidCore** | TMDB | `https://vidcore.org/embed/{movie\|tv}/{tmdbId}/{season}/{episode}?sub=tr` | TMDB ID tabanlı, `?sub=tr` ile Türkçe altyazı. Admin panelden manuel eklenir, `EMBED_DOMAINS`'e vidcore.org eklendi |
 
 ### Source Priority (in `/api/video/route.ts`)
-Custom sort order: `CineX → VidSrc → 2Embed → VSEmbed → MultiEmbed → StreamSrc`. API changed from `createdAt: 'desc'` to `SOURCE_PRIORITY` map.
+Custom sort order: `CineX → VidSrc → 2Embed → VSEmbed → MultiEmbed → StreamSrc → VidCore`. API changed from `createdAt: 'desc'` to `SOURCE_PRIORITY` map.
 
 ### Embed Player Details
 - CSP: fully relaxed (`default-src *`, `frame-src *`, `script-src *`)
@@ -41,11 +42,13 @@ Custom sort order: `CineX → VidSrc → 2Embed → VSEmbed → MultiEmbed → S
 
 ## Known Issues / Context
 
-### Turkish Subtitles (BLOCKED)
+### Turkish Subtitles (PARTIALLY FIXED)
 - Wyzie API supports `tr` language code but CineX player does NOT filter by language
 - `cache.vdrk.site` has 12 language VTT files (Arabic, Bengali, English, Filipino, French, Indonesian, Malay, Panjabi, Portuguese, Russian, Urdu, Chinese) — NO Turkish
 - Turkish subs may exist on Wyzie for some titles, but cannot be forced from embed URL
-- **No fix possible** without modifying CineX's player code (cross-origin iframe, can't inject subtitles)
+- **VidSrc fix**: API route appends `?ds_lang=tr` to VidSrc embed URLs — requests Turkish subtitles when available
+- **VidCore fix**: New source added with `?sub=tr` hardcoded in embed URL — requests Turkish subtitles
+- CineX still cannot be fixed (cross-origin iframe, can't inject subtitles)
 
 ### Breaking Bad Episode Order (KNOWN ISSUE)
 - CineX correctly parses `/tv/1396/2/1` → SEASON=2, EPISODE=1
