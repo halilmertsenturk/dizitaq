@@ -35,7 +35,7 @@ Custom sort order: `CineX → VidLink → vidsrc.to → VidSrc Embed → 2Embed 
 
 ### Embed Player Details
 - CSP: fully relaxed (`default-src *`, `frame-src *`, `script-src *`)
-- iframe sandbox: `allow-scripts allow-same-origin allow-forms allow-popups`
+- iframe sandbox: kaldırıldı (VidLink JWPlayer sandbox algılayıp çalışmıyordu; CSP zaten fully relaxed)
 - referrerPolicy removed (was `no-referrer` — caused stream blocking)
 
 ### Continue Watching Navigation (FIXED)
