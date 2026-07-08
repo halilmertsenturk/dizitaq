@@ -36,12 +36,14 @@ Sadece `VidLink` kaldı, diğer tüm source'lar silindi.
 
 ## Known Issues / Context
 
-### Turkish Subtitles (PARTIALLY FIXED)
-- Wyzie API supports `tr` language code but CineX player does NOT filter by language
-- `cache.vdrk.site` has 12 language VTT files (Arabic, Bengali, English, Filipino, French, Indonesian, Malay, Panjabi, Portuguese, Russian, Urdu, Chinese) — NO Turkish
-- Turkish subs may exist on Wyzie for some titles, but cannot be forced from embed URL
-- **VidCore fix**: New source added with `?sub=tr` hardcoded in embed URL — requests Turkish subtitles
-- CineX still cannot be fixed (cross-origin iframe, can't inject subtitles)
+### Turkish Subtitles (VidLink üzerinden çözüldü ✅)
+- VidLink `sub_file` parametresi sayesinde harici VTT altyazı desteği
+- `/api/subtitle?tmdbId={id}&season={s}&episode={e}&lang=tr` endpoint'i:
+  - OpenSubtitles API üzerinden Türkçe altyazı arar
+  - SRT → VTT dönüşümü yapar
+  - CORS header'ları ile servis eder
+- `.env`'de `OPENSUBTITLES_API_KEY` gerekli (ücretsiz: https://opensubtitles.com/api)
+- `/api/video/route.ts` otomatik olarak VidLink embed URL'ine `sub_file` parametresini ekler
 
 ### Breaking Bad Episode Order (KNOWN ISSUE)
 - CineX correctly parses `/tv/1396/2/1` → SEASON=2, EPISODE=1

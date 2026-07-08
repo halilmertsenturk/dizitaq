@@ -6,6 +6,8 @@ const SOURCE_PRIORITY: Record<string, number> = {
   'VidLink': 0,
 }
 
+const SUBTITLE_LANG = 'tr'
+
 export async function GET(request: NextRequest) {
   const limiter = getVideoLimiter()
   if (limiter) {
@@ -25,6 +27,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Provide watchmodeId' }, { status: 400 })
   }
 
+  // Look up tmdbId for subtitle support
+  const title = await prisma.cachedTitle.findUnique({
+    where: { watchmodeId },
+    select: { tmdbId: true },
+  })
+
   let sources = await prisma.videoSource.findMany({
     where: { watchmodeId, isActive: true },
     select: {
@@ -39,12 +47,21 @@ export async function GET(request: NextRequest) {
 
   sources.sort((a, b) => (SOURCE_PRIORITY[a.sourceName] ?? 99) - (SOURCE_PRIORITY[b.sourceName] ?? 99))
 
-  const mapped = sources.map(s => ({
-    ...s,
-    embedUrl: (seasonParam && episodeParam)
-      ? s.embedUrl.replace('{season}', String(seasonParam)).replace('{episode}', String(episodeParam))
-      : s.embedUrl,
-  }))
+  const baseUrl = process.env.NEXTAUTH_URL || `https://${request.headers.get('host') || 'localhost:3000'}`
+
+  const mapped = sources.map(s => {
+    let embedUrl = s.embedUrl
+    if (seasonParam && episodeParam) {
+      embedUrl = embedUrl.replace('{season}', String(seasonParam)).replace('{episode}', String(episodeParam))
+    }
+    // Append Turkish subtitle parameter for VidLink
+    if (s.sourceName === 'VidLink' && title?.tmdbId) {
+      const subUrl = `${baseUrl}/api/subtitle?tmdbId=${title.tmdbId}${seasonParam ? `&season=${seasonParam}` : ''}${episodeParam ? `&episode=${episodeParam}` : ''}&lang=${SUBTITLE_LANG}`
+      const separator = embedUrl.includes('?') ? '&' : '?'
+      embedUrl += `${separator}sub_file=${encodeURIComponent(subUrl)}&sub_label=T%C3%BCrk%C3%A7e`
+    }
+    return { ...s, embedUrl }
+  })
 
   return NextResponse.json({ sources: mapped })
 }
