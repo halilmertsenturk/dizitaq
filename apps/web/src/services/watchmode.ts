@@ -403,21 +403,27 @@ export async function getTitleCredits(
 ): Promise<WatchmodeCastMember[]> {
   const raw = await fetchFromWatchmode<
     Array<{
-      id: number
-      name: string
+      person_id: number
+      full_name: string
       role: string | null
       headshot_url: string | null
       type: string
     }>
   >(
-    `/title/${id}/credits`,
+    `/title/${id}/cast-crew/`,
     {},
     'credits',
     CACHE_TTL.DETAILS
   )
   return raw
-    .filter(c => c.type === 'cast')
-    .map(c => ({ ...c, type: 'cast' as const }))
+    .filter(c => c.type === 'Cast')
+    .map(c => ({
+      id: c.person_id,
+      name: c.full_name,
+      role: c.role,
+      headshot_url: c.headshot_url ?? null,
+      type: 'cast' as const,
+    }))
     .slice(0, 15)
 }
 
