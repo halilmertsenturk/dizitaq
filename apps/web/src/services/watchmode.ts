@@ -408,7 +408,7 @@ export async function getFullTitleDetails(
 
   if (!Array.isArray(episodesRaw)) return { ...details, sources, seasons: [] }
 
-  await ensureVidLinkSources([details])
+  ensureVidLinkSources([details])
 
   const seasonMap = new Map<number, WatchmodeEpisode[]>()
   for (const ep of episodesRaw) {

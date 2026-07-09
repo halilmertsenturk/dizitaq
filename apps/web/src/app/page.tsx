@@ -8,6 +8,7 @@ import { TitleCard } from '@/components/title/title-card'
 import { Button } from '@/components/ui/button'
 import { useTrending } from '@/hooks/use-titles'
 import { ChevronRight, TrendingUp, Flame, Tv, Film, Play, Clock, Star } from 'lucide-react'
+import { Pagination } from '@/components/ui/pagination'
 import Link from 'next/link'
 
 const GENRE_CATEGORIES = [
@@ -170,25 +171,11 @@ export default function HomePage() {
         />
 
         {data && data.total_pages > 1 && (
-          <div className="flex justify-center items-center gap-4 mt-8">
-            <Button
-              variant="outline"
-              disabled={page <= 1}
-              onClick={() => setPage(p => p - 1)}
-            >
-              Previous
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              Page {page} of {data.total_pages}
-            </span>
-            <Button
-              variant="outline"
-              disabled={page >= data.total_pages}
-              onClick={() => setPage(p => p + 1)}
-            >
-              Next
-            </Button>
-          </div>
+          <Pagination
+            currentPage={page}
+            totalPages={data.total_pages}
+            onPageChange={setPage}
+          />
         )}
       </section>
     </div>

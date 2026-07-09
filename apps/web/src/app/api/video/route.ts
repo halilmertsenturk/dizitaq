@@ -8,6 +8,13 @@ const SOURCE_PRIORITY: Record<string, number> = {
 
 const SUBTITLE_LANG = 'tr'
 
+function buildVidLinkUrl(tmdbId: number, type: string | null, season?: number, episode?: number): string {
+  if (type === 'series' && season !== undefined && episode !== undefined) {
+    return `https://vidlink.pro/tv/${tmdbId}/${season}/${episode}`
+  }
+  return `https://vidlink.pro/movie/${tmdbId}`
+}
+
 export async function GET(request: NextRequest) {
   const limiter = getVideoLimiter()
   if (limiter) {
@@ -27,10 +34,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Provide watchmodeId' }, { status: 400 })
   }
 
-  // Look up tmdbId for subtitle support
   const title = await prisma.cachedTitle.findUnique({
     where: { watchmodeId },
-    select: { tmdbId: true },
+    select: { tmdbId: true, type: true },
   })
 
   let sources = await prisma.videoSource.findMany({
@@ -45,15 +51,24 @@ export async function GET(request: NextRequest) {
     },
   })
 
+  // Fallback: no DB sources but we have tmdbId → construct VidLink URL dynamically
+  if (sources.length === 0 && title?.tmdbId) {
+    sources = [{
+      id: `dynamic-vidlink-${watchmodeId}`,
+      embedUrl: buildVidLinkUrl(title.tmdbId, title.type, seasonParam ?? undefined, episodeParam ?? undefined),
+      sourceName: 'VidLink',
+      quality: null,
+      language: 'en',
+      isActive: true,
+    }]
+  }
+
   sources.sort((a, b) => (SOURCE_PRIORITY[a.sourceName] ?? 99) - (SOURCE_PRIORITY[b.sourceName] ?? 99))
 
   const baseUrl = process.env.NEXTAUTH_URL || `https://${request.headers.get('host') || 'localhost:3000'}`
 
   const mapped = sources.map(s => {
     let embedUrl = s.embedUrl
-    if (seasonParam && episodeParam) {
-      embedUrl = embedUrl.replace('{season}', String(seasonParam)).replace('{episode}', String(episodeParam))
-    }
     // Append Turkish subtitle parameter for VidLink
     if (s.sourceName === 'VidLink' && title?.tmdbId) {
       const subUrl = `${baseUrl}/api/subtitle?tmdbId=${title.tmdbId}${seasonParam ? `&season=${seasonParam}` : ''}${episodeParam ? `&episode=${episodeParam}` : ''}&lang=${SUBTITLE_LANG}`
