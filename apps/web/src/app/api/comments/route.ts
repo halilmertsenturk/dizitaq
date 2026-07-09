@@ -19,7 +19,9 @@ export async function GET(request: NextRequest) {
   if (!watchmodeId) return NextResponse.json({ error: 'watchmodeId required' }, { status: 400 })
 
   const title = await prisma.cachedTitle.findUnique({ where: { watchmodeId } })
-  if (!title) return NextResponse.json({ error: 'Title not found' }, { status: 404 })
+  if (!title) {
+    return NextResponse.json({ comments: [], total: 0, page, totalPages: 0 })
+  }
 
   const [comments, total] = await Promise.all([
     prisma.comment.findMany({

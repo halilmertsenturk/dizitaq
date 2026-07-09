@@ -53,9 +53,9 @@ function secureFlag(): string {
 }
 
 export function setAdminCookie(token: string): string {
-  return `${COOKIE_NAME}=${token}; HttpOnly${secureFlag()}; SameSite=Lax; Path=/admin; Max-Age=${SESSION_DURATION / 1000}`
+  return `${COOKIE_NAME}=${token}; HttpOnly${secureFlag()}; SameSite=Lax; Path=/; Max-Age=${SESSION_DURATION / 1000}`
 }
 
 export function clearAdminCookie(): string {
-  return `${COOKIE_NAME}=; HttpOnly${secureFlag()}; SameSite=Lax; Path=/admin; Max-Age=0`
+  return `${COOKIE_NAME}=; HttpOnly${secureFlag()}; SameSite=Lax; Path=/; Max-Age=0`
 }

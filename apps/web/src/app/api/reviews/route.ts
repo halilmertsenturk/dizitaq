@@ -16,7 +16,9 @@ export async function GET(request: NextRequest) {
   if (!watchmodeId) return NextResponse.json({ error: 'watchmodeId required' }, { status: 400 })
 
   const title = await prisma.cachedTitle.findUnique({ where: { watchmodeId } })
-  if (!title) return NextResponse.json({ error: 'Title not found' }, { status: 404 })
+  if (!title) {
+    return NextResponse.json({ reviews: [], averageRating: 0, totalReviews: 0 })
+  }
 
   const reviews = await prisma.review.findMany({
     where: { titleId: title.id },
