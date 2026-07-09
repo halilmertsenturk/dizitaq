@@ -13,3 +13,4 @@ turbo/.cache
 
 .vercel
 .env*
+AGENTS.md
