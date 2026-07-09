@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { SearchBar } from '@/components/search/search-bar'
 import { Filters } from '@/components/search/filters'
 import { TitleGrid } from '@/components/title/title-grid'
+import { Pagination } from '@/components/ui/pagination'
 import { useSearch, useTrending } from '@/hooks/use-titles'
 import { useDebounce } from '@/hooks/use-debounce'
 import { Search } from 'lucide-react'
@@ -16,6 +17,7 @@ function SearchContent() {
   const [genre, setGenre] = useState(searchParams.get('genre') ?? '')
   const [year, setYear] = useState(searchParams.get('year') ?? '')
   const [type, setType] = useState<string>(searchParams.get('type') ?? '')
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     const g = searchParams.get('genre')
@@ -24,16 +26,21 @@ function SearchContent() {
     if (g) setGenre(g)
     if (y) setYear(y)
     if (t) setType(t)
+    setPage(1)
   }, [searchParams])
 
   const debouncedQuery = useDebounce(query, 400)
+
+  useEffect(() => {
+    setPage(1)
+  }, [genre, year, type, debouncedQuery])
 
   const resolvedFilters: TitleFilters = {
     query: debouncedQuery || undefined,
     genre: genre && genre !== 'all' ? genre : undefined,
     year: year && year !== 'all' ? year : undefined,
     type: type && type !== 'all' ? type as TitleFilters['type'] : undefined,
-    page: 1,
+    page,
   }
 
   const hasFilters = !!(resolvedFilters.query || resolvedFilters.genre || resolvedFilters.year || resolvedFilters.type)
@@ -82,6 +89,16 @@ function SearchContent() {
       </div>
 
       <TitleGrid titles={titles ?? []} loading={loading} error={error} />
+
+      {searchFilters && searchData && searchData.total_pages > 1 && (
+        <div className="mt-8">
+          <Pagination
+            currentPage={page}
+            totalPages={searchData.total_pages}
+            onPageChange={setPage}
+          />
+        </div>
+      )}
     </div>
   )
 }
