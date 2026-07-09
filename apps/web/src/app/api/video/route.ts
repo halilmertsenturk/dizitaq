@@ -4,6 +4,7 @@ import { getVideoLimiter, parseId } from '@/lib/security'
 
 const SOURCE_PRIORITY: Record<string, number> = {
   'VidLink': 0,
+  'VidSrc': 1,
 }
 
 const SUBTITLE_LANG = 'tr'
@@ -13,6 +14,13 @@ function buildVidLinkUrl(tmdbId: number, type: string | null, season?: number, e
     return `https://vidlink.pro/tv/${tmdbId}/${season}/${episode}`
   }
   return `https://vidlink.pro/movie/${tmdbId}`
+}
+
+function buildVidSrcUrl(tmdbId: number, type: string | null, season?: number, episode?: number): string {
+  if (type === 'series' && season !== undefined && episode !== undefined) {
+    return `https://vidsrc.cc/v2/embed/tv/${tmdbId}/${season}/${episode}?ds_lang=tr`
+  }
+  return `https://vidsrc.cc/v2/embed/movie/${tmdbId}?ds_lang=tr`
 }
 
 export async function GET(request: NextRequest) {
@@ -51,16 +59,26 @@ export async function GET(request: NextRequest) {
     },
   })
 
-  // Fallback: no DB sources but we have tmdbId → construct VidLink URL dynamically
+  // Fallback: no DB sources but we have tmdbId → construct dynamic sources
   if (sources.length === 0 && title?.tmdbId) {
-    sources = [{
-      id: `dynamic-vidlink-${watchmodeId}`,
-      embedUrl: buildVidLinkUrl(title.tmdbId, title.type, seasonParam ?? undefined, episodeParam ?? undefined),
-      sourceName: 'VidLink',
-      quality: null,
-      language: 'en',
-      isActive: true,
-    }]
+    sources = [
+      {
+        id: `dynamic-vidlink-${watchmodeId}`,
+        embedUrl: buildVidLinkUrl(title.tmdbId, title.type, seasonParam ?? undefined, episodeParam ?? undefined),
+        sourceName: 'VidLink',
+        quality: null,
+        language: 'en',
+        isActive: true,
+      },
+      {
+        id: `dynamic-vidsrc-${watchmodeId}`,
+        embedUrl: buildVidSrcUrl(title.tmdbId, title.type, seasonParam ?? undefined, episodeParam ?? undefined),
+        sourceName: 'VidSrc',
+        quality: null,
+        language: 'tr',
+        isActive: true,
+      },
+    ]
   }
 
   sources.sort((a, b) => (SOURCE_PRIORITY[a.sourceName] ?? 99) - (SOURCE_PRIORITY[b.sourceName] ?? 99))
