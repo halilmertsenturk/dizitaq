@@ -6,8 +6,6 @@ const SOURCE_PRIORITY: Record<string, number> = {
   'VidLink': 0,
 }
 
-const SUBTITLE_LANG = 'tr'
-
 function buildVidLinkUrl(tmdbId: number, type: string | null, season?: number, episode?: number): string {
   if (type === 'series' && season !== undefined && episode !== undefined) {
     return `https://vidlink.pro/tv/${tmdbId}/${season}/${episode}`
@@ -65,19 +63,11 @@ export async function GET(request: NextRequest) {
 
   sources.sort((a, b) => (SOURCE_PRIORITY[a.sourceName] ?? 99) - (SOURCE_PRIORITY[b.sourceName] ?? 99))
 
-  const baseUrl = process.env.NEXTAUTH_URL || `https://${request.headers.get('host') || 'localhost:3000'}`
-
   const mapped = sources.map(s => {
     let embedUrl = s.embedUrl
     // Replace DB placeholder patterns with actual season/episode values
     if (seasonParam) embedUrl = embedUrl.replace('{season}', String(seasonParam))
     if (episodeParam) embedUrl = embedUrl.replace('{episode}', String(episodeParam))
-    // Append Turkish subtitle parameter for VidLink
-    if (s.sourceName === 'VidLink' && title?.tmdbId) {
-      const subUrl = `${baseUrl}/api/subtitle?tmdbId=${title.tmdbId}${seasonParam ? `&season=${seasonParam}` : ''}${episodeParam ? `&episode=${episodeParam}` : ''}&lang=${SUBTITLE_LANG}`
-      const separator = embedUrl.includes('?') ? '&' : '?'
-      embedUrl += `${separator}sub_file=${encodeURIComponent(subUrl)}&sub_label=T%C3%BCrk%C3%A7e`
-    }
     return { ...s, embedUrl }
   })
 

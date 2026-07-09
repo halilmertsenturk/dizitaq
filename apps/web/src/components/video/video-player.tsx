@@ -93,7 +93,6 @@ export function VideoPlayer({ watchmodeId, episodeId, season, episode, title, on
           src={currentSource.embedUrl}
           className="absolute inset-0 h-full w-full"
           allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-          allowFullScreen
           title={title}
         />
       </div>
