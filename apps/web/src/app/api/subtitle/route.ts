@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 const OS_API = 'https://api.opensubtitles.com/api/v1'
+const PODNAPISI_URL = 'https://www.podnapisi.net'
 
 function srtToVtt(srt: string): string {
   let vtt = 'WEBVTT\n\n'
@@ -50,6 +51,50 @@ async function searchSubtitles(tmdbId: number, season?: number, episode?: number
   ) ?? null
 }
 
+async function searchPodnapisi(imdbId: string, title: string, season?: number, episode?: number): Promise<{ pid: string } | null> {
+  const params = new URLSearchParams({ language: 'tr' })
+  if (imdbId) {
+    // Podnapisi accepts numeric IMDb ID (without 'tt' prefix)
+    params.set('keywords', imdbId.replace(/^tt/, ''))
+  } else {
+    params.set('keywords', title)
+  }
+  if (season !== undefined && episode !== undefined) {
+    params.set('seasons', String(season))
+    params.set('episodes', String(episode))
+    params.set('movie_type', 'tv-series')
+  } else {
+    params.set('movie_type', 'movie')
+  }
+
+  try {
+    const res = await fetch(`${PODNAPISI_URL}/subtitles/search/advanced?${params}`, {
+      headers: { 'Accept': 'application/json', 'User-Agent': 'Dizitaq/1.0' },
+      signal: AbortSignal.timeout(5000),
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    if (!data?.data?.length) return null
+    const sub = data.data[0]
+    return { pid: sub.id }
+  } catch {
+    return null
+  }
+}
+
+async function downloadPodnapisiSrt(pid: string): Promise<string | null> {
+  try {
+    const res = await fetch(`${PODNAPISI_URL}/subtitles/${pid}/download`, {
+      headers: { 'User-Agent': 'Dizitaq/1.0' },
+      signal: AbortSignal.timeout(10000),
+    })
+    if (!res.ok) return null
+    return res.text()
+  } catch {
+    return null
+  }
+}
+
 async function downloadSubtitleSrt(fileId: number): Promise<string | null> {
   const apiKey = process.env.OPENSUBTITLES_API_KEY
   if (!apiKey) return null
@@ -78,9 +123,46 @@ async function downloadSubtitleSrt(fileId: number): Promise<string | null> {
   return fileRes.text()
 }
 
+async function fetchVtt(tmdbId: number, imdbId: string, title: string, season?: number, episode?: number, lang = 'tr'): Promise<string | null> {
+  // Primary: OpenSubtitles
+  if (process.env.OPENSUBTITLES_API_KEY) {
+    const sub = await searchSubtitles(tmdbId, season, episode, lang)
+    if (sub) {
+      const fileId = sub.attributes?.files?.[0]?.file_id
+      if (fileId) {
+        const srt = await downloadSubtitleSrt(fileId)
+        if (srt) return srtToVtt(srt)
+      }
+    }
+  }
+
+  // Fallback: Podnapisi
+  const pod = await searchPodnapisi(imdbId, title, season, episode)
+  if (pod) {
+    const srt = await downloadPodnapisiSrt(pod.pid)
+    if (srt) return srtToVtt(srt)
+  }
+
+  return null
+}
+
+function vttMessage(msg: string): Response {
+  const vtt = `WEBVTT\n\n00:00:01.000 --> 00:00:04.000\n${msg}`
+  return new NextResponse(vtt, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/vtt; charset=utf-8',
+      'Access-Control-Allow-Origin': '*',
+      'Cache-Control': 'public, max-age=3600',
+    },
+  })
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const tmdbIdParam = searchParams.get('tmdbId')
+  const imdbId = searchParams.get('imdbId') ?? ''
+  const title = searchParams.get('title') ?? ''
   const seasonParam = searchParams.get('season')
   const episodeParam = searchParams.get('episode')
   const lang = searchParams.get('lang') || 'tr'
@@ -93,58 +175,8 @@ export async function GET(request: NextRequest) {
   const season = seasonParam ? parseInt(seasonParam, 10) : undefined
   const episode = episodeParam ? parseInt(episodeParam, 10) : undefined
 
-  if (!process.env.OPENSUBTITLES_API_KEY) {
-    const msg = `WEBVTT\n\n00:00:01.000 --> 00:00:04.000\nAltyazı için OPENSUBTITLES_API_KEY gerekli.\n00:00:04.000 --> 00:00:08.000\nhttps://opensubtitles.com/api adresinden ücretsiz key alın.`
-    return new NextResponse(msg, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/vtt; charset=utf-8',
-        'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'public, max-age=3600',
-      },
-    })
-  }
-
-  const sub = await searchSubtitles(tmdbId, season, episode, lang)
-  if (!sub) {
-    const msg = 'WEBVTT\n\n00:00:01.000 --> 00:00:04.000\nTürkçe altyazı bulunamadı.'
-    return new NextResponse(msg, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/vtt; charset=utf-8',
-        'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'public, max-age=3600',
-      },
-    })
-  }
-
-  const fileId = sub.attributes?.files?.[0]?.file_id
-  if (!fileId) {
-    const msg = 'WEBVTT\n\n00:00:01.000 --> 00:00:04.000\nAltyazı dosya ID bulunamadı.'
-    return new NextResponse(msg, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/vtt; charset=utf-8',
-        'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'public, max-age=3600',
-      },
-    })
-  }
-
-  const srt = await downloadSubtitleSrt(fileId)
-  if (!srt) {
-    const msg = 'WEBVTT\n\n00:00:01.000 --> 00:00:04.000\nAltyazı indirilemedi.'
-    return new NextResponse(msg, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/vtt; charset=utf-8',
-        'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'public, max-age=3600',
-      },
-    })
-  }
-
-  const vtt = srtToVtt(srt)
+  const vtt = await fetchVtt(tmdbId, imdbId, title, season, episode, lang)
+  if (!vtt) return vttMessage('Türkçe altyazı bulunamadı.')
 
   return new NextResponse(vtt, {
     status: 200,

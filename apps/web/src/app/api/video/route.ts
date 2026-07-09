@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
 
   const title = await prisma.cachedTitle.findUnique({
     where: { watchmodeId },
-    select: { tmdbId: true, type: true },
+    select: { tmdbId: true, type: true, imdbId: true, title: true },
   })
 
   let sources = await prisma.videoSource.findMany({
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
     if (episodeParam) embedUrl = embedUrl.replace('{episode}', String(episodeParam))
     // Append Turkish subtitle parameter for VidLink
     if (s.sourceName === 'VidLink' && title?.tmdbId) {
-      const subUrl = `${baseUrl}/api/subtitle?tmdbId=${title.tmdbId}${seasonParam ? `&season=${seasonParam}` : ''}${episodeParam ? `&episode=${episodeParam}` : ''}&lang=${SUBTITLE_LANG}`
+      const subUrl = `${baseUrl}/api/subtitle?tmdbId=${title.tmdbId}&imdbId=${title.imdbId ?? ''}&title=${encodeURIComponent(title.title)}${seasonParam ? `&season=${seasonParam}` : ''}${episodeParam ? `&episode=${episodeParam}` : ''}&lang=${SUBTITLE_LANG}`
       const separator = embedUrl.includes('?') ? '&' : '?'
       embedUrl += `${separator}sub_file=${encodeURIComponent(subUrl)}&sub_label=T%C3%BCrk%C3%A7e`
     }
