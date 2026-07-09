@@ -5,6 +5,7 @@ import type {
   WatchmodeTitle,
   WatchmodeSource,
   WatchmodeEpisode,
+  WatchmodeCastMember,
   WatchmodeDetailResponse,
   TitleFilters,
 } from '@dizitaq/shared'
@@ -397,16 +398,40 @@ export async function getTitleEpisodes(
   )
 }
 
+export async function getTitleCredits(
+  id: number
+): Promise<WatchmodeCastMember[]> {
+  const raw = await fetchFromWatchmode<
+    Array<{
+      id: number
+      name: string
+      role: string | null
+      headshot_url: string | null
+      type: string
+    }>
+  >(
+    `/title/${id}/credits`,
+    {},
+    'credits',
+    CACHE_TTL.DETAILS
+  )
+  return raw
+    .filter(c => c.type === 'cast')
+    .map(c => ({ ...c, type: 'cast' as const }))
+    .slice(0, 15)
+}
+
 export async function getFullTitleDetails(
   id: number
 ): Promise<WatchmodeDetailResponse> {
-  const [details, sources, episodesRaw] = await Promise.all([
+  const [details, sources, episodesRaw, cast] = await Promise.all([
     getTitleDetails(id),
     getTitleSources(id),
-    getTitleEpisodes(id).catch(() => []),
+    getTitleEpisodes(id).catch(() => [] as WatchmodeEpisode[]),
+    getTitleCredits(id).catch(() => [] as WatchmodeCastMember[]),
   ])
 
-  if (!Array.isArray(episodesRaw)) return { ...details, sources, seasons: [] }
+  if (!Array.isArray(episodesRaw)) return { ...details, sources, seasons: [], cast }
 
   ensureVidLinkSources([details])
 
@@ -429,6 +454,7 @@ export async function getFullTitleDetails(
     ...details,
     sources,
     seasons,
+    cast,
   }
 }
 

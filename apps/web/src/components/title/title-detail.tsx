@@ -4,8 +4,8 @@ import Image from 'next/image'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { PlatformBadge } from '@/components/platform/platform-badge'
 import { EpisodeList } from './episode-list'
+import { CastList } from './cast-list'
 import type { WatchmodeDetailResponse } from '@dizitaq/shared'
 import { formatRating, formatYear } from '@/lib/utils'
 import { Star, Film, Tv, Calendar, Plus, Check, Clock, Play } from 'lucide-react'
@@ -163,17 +163,8 @@ export function TitleDetail({ data, loading, error, isInWatchlist, onToggleWatch
             </Button>
           </div>
 
-          {/* Streaming platforms */}
-          {data.sources && data.sources.length > 0 && (
-            <div>
-              <h2 className="text-lg font-semibold mb-3">Where to Watch</h2>
-              <div className="flex flex-wrap gap-3">
-                {data.sources.map((source) => (
-                  <PlatformBadge key={source.source_id} source={source} />
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Cast */}
+          <CastList cast={data.cast} />
 
           {/* Episodes */}
           {data.seasons && data.seasons.length > 0 && (

@@ -55,9 +55,18 @@ export interface WatchmodeSearchResponse {
   total_pages: number
 }
 
+export interface WatchmodeCastMember {
+  id: number
+  name: string
+  role: string | null
+  headshot_url: string | null
+  type: 'cast' | 'crew'
+}
+
 export interface WatchmodeDetailResponse extends WatchmodeTitle {
   sources: WatchmodeSource[]
   seasons?: WatchmodeSeason[]
+  cast: WatchmodeCastMember[]
 }
 
 export interface TitleFilters {
