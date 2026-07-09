@@ -406,7 +406,6 @@ export async function getTitleCredits(
       person_id: number
       full_name: string
       role: string | null
-      headshot_url: string | null
       type: string
     }>
   >(
@@ -421,7 +420,6 @@ export async function getTitleCredits(
       id: c.person_id,
       name: c.full_name,
       role: c.role,
-      headshot_url: c.headshot_url ?? null,
       type: 'cast' as const,
     }))
     .slice(0, 15)

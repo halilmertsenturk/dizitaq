@@ -59,7 +59,6 @@ export interface WatchmodeCastMember {
   id: number
   name: string
   role: string | null
-  headshot_url: string | null
   type: 'cast' | 'crew'
 }
 
