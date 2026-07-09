@@ -1,3 +1,4 @@
+import { prisma } from '@/lib/prisma'
 import { getCached, setCache, CACHE_TTL } from './cache'
 import type {
   WatchmodeSearchResponse,
@@ -130,6 +131,60 @@ async function enrichWithPosters(titles: WatchmodeTitle[]): Promise<WatchmodeTit
   })
 }
 
+async function ensureVidLinkSources(titles: WatchmodeTitle[]): Promise<void> {
+  try {
+    const withTmdb = titles.filter(t => t.tmdb_id != null)
+    if (withTmdb.length === 0) return
+
+    const watchmodeIds = withTmdb.map(t => t.id)
+    const existing = await prisma.videoSource.findMany({
+      where: { watchmodeId: { in: watchmodeIds }, sourceName: 'VidLink' },
+      select: { watchmodeId: true },
+    })
+    const existingIds = new Set(existing.map(s => s.watchmodeId))
+
+    const toCreate = withTmdb.filter(t => !existingIds.has(t.id))
+
+    for (const title of toCreate) {
+      const embedUrl = title.type === 'series'
+        ? `https://vidlink.pro/tv/${title.tmdb_id}/{season}/{episode}`
+        : `https://vidlink.pro/movie/${title.tmdb_id}`
+
+      await prisma.$transaction([
+        prisma.cachedTitle.upsert({
+          where: { watchmodeId: title.id },
+          create: {
+            watchmodeId: title.id,
+            title: title.title,
+            type: title.type,
+            year: title.year ?? undefined,
+            tmdbId: title.tmdb_id!,
+            imdbId: title.imdb_id,
+          },
+          update: {
+            title: title.title,
+            type: title.type,
+            year: title.year ?? undefined,
+            tmdbId: title.tmdb_id!,
+            imdbId: title.imdb_id,
+          },
+        }),
+        prisma.videoSource.create({
+          data: {
+            watchmodeId: title.id,
+            embedUrl,
+            sourceName: 'VidLink',
+            language: 'en',
+            isActive: true,
+          },
+        }),
+      ])
+    }
+  } catch {
+    // Non-critical: VidLink source creation failure should not break trending
+  }
+}
+
 function mapTitleResult(t: { id: number; title?: string; name?: string; type: string; year: number | null; imdb_id: string | null; tmdb_id: number | null }): WatchmodeTitle {
   return {
     id: t.id,
@@ -260,8 +315,10 @@ export async function getTrending(
     total_results: number
   }>('/list-titles', params, `trending${type ? `:${type}` : ''}`, CACHE_TTL.TRENDING)
 
+  const titles = await enrichWithPosters(raw.titles.map(mapTitleResult))
+  await ensureVidLinkSources(titles)
   return {
-    titles: await enrichWithPosters(raw.titles.map(mapTitleResult)),
+    titles,
     total: raw.total_results,
     current_page: raw.page,
     total_pages: raw.total_pages,

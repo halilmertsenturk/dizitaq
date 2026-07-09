@@ -1,5 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('@/lib/prisma', () => {
+  const mockVideoSource = {
+    findMany: vi.fn().mockResolvedValue([]),
+    create: vi.fn().mockResolvedValue({}),
+  }
+  const mockCachedTitle = {
+    upsert: vi.fn().mockResolvedValue({}),
+  }
+  return {
+    prisma: {
+      videoSource: mockVideoSource,
+      cachedTitle: mockCachedTitle,
+      $transaction: vi.fn((args: unknown[]) => Promise.resolve(args.map(() => ({})))),
+    },
+  }
+})
+
 let lastUrl = ''
 const mockResponseQueue: Array<{ ok: boolean; statusText?: string; status?: number; data: unknown }> = []
 

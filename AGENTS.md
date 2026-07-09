@@ -17,7 +17,7 @@ Monorepo (Turbo + npm workspaces): Next.js 14 (app router), Prisma (Neon Postgre
 
 ## Streaming Setup
 
-### Embed Sources (1 service × 6 titles = 6 sources, 2026-07-08)
+### Embed Sources (1 service × 6 titles = 6 sources, 2026-07-09)
 | Source | ID Type | URL Pattern | Notes |
 |--------|---------|-------------|-------|
 | **VidLink** | TMDB | `https://vidlink.pro/{movie\|tv}/{tmdbId}/{season}/{episode}` | Next.js + JWPlayer, frame-blocking YOK, reklam YOK, çalışıyor ✅ |
@@ -42,8 +42,16 @@ Sadece `VidLink` kaldı, diğer tüm source'lar silindi.
   - OpenSubtitles API üzerinden Türkçe altyazı arar
   - SRT → VTT dönüşümü yapar
   - CORS header'ları ile servis eder
-- `.env`'de `OPENSUBTITLES_API_KEY` gerekli (ücretsiz: https://opensubtitles.com/api)
+- `OPENSUBTITLES_API_KEY` lokal `.env` + Vercel Production'a eklendi (2026-07-09)
 - `/api/video/route.ts` otomatik olarak VidLink embed URL'ine `sub_file` parametresini ekler
+- **IMPORTANT**: OpenSubtitles API `language` parametresi kesin filtre DEĞİL — sonuçlar client-side'da `language === 'tr'` ile filtrelenir (`route.ts:48`)
+- **Known limitation**: bazı dizilerde (örn. Obsession 2023) OpenSubtitles'da hiç Türkçe altyazı olmayabilir → player'da "Türkçe altyazı bulunamadı" gösterilir
+
+
+### OpenSubtitles Language Filter (FIXED 2026-07-09)
+- OpenSubtitles API `language` param is **not a strict filter** — was returning English when Turkish didn't exist
+- Fixed in `api/subtitle/route.ts:48`: added `data.data.find(sub => sub.attributes.language === lang)`
+- Without this fix, player showed "Türkçe" but played English text
 
 ### Breaking Bad Episode Order (KNOWN ISSUE)
 - CineX correctly parses `/tv/1396/2/1` → SEASON=2, EPISODE=1
