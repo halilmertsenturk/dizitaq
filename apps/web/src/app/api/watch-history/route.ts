@@ -11,20 +11,24 @@ async function getUser() {
 }
 
 export async function GET() {
-  const user = await getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    const user = await getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const history = await prisma.watchHistory.findMany({
-    where: { userId: user.id },
-    orderBy: { watchedAt: 'desc' },
-    take: 50,
-    include: {
-      title: { select: { id: true, watchmodeId: true, title: true, poster: true, type: true } },
-      episode: { select: { id: true, epNum: true, title: true } },
-    },
-  })
+    const history = await prisma.watchHistory.findMany({
+      where: { userId: user.id },
+      orderBy: { watchedAt: 'desc' },
+      take: 50,
+      include: {
+        title: { select: { id: true, watchmodeId: true, title: true, poster: true, type: true } },
+        episode: { select: { id: true, epNum: true, title: true } },
+      },
+    })
 
-  return NextResponse.json(history)
+    return NextResponse.json(history)
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
 
 export async function POST(request: NextRequest) {

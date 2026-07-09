@@ -69,6 +69,9 @@ export async function GET(request: NextRequest) {
 
   const mapped = sources.map(s => {
     let embedUrl = s.embedUrl
+    // Replace DB placeholder patterns with actual season/episode values
+    if (seasonParam) embedUrl = embedUrl.replace('{season}', String(seasonParam))
+    if (episodeParam) embedUrl = embedUrl.replace('{episode}', String(episodeParam))
     // Append Turkish subtitle parameter for VidLink
     if (s.sourceName === 'VidLink' && title?.tmdbId) {
       const subUrl = `${baseUrl}/api/subtitle?tmdbId=${title.tmdbId}${seasonParam ? `&season=${seasonParam}` : ''}${episodeParam ? `&episode=${episodeParam}` : ''}&lang=${SUBTITLE_LANG}`
